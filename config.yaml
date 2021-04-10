@@ -1,0 +1,9 @@
+options:
+  admin-port:
+    type: string
+    default: '9901'
+    description: Admin port
+  http-port:
+    type: string
+    default: '9090'
+    description: Proxied HTTP port

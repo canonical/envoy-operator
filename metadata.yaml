@@ -1,0 +1,22 @@
+name: envoy
+display-name: Envoy
+summary: Cloud-native high-performance edge/middle/service proxy
+description: https://www.envoyproxy.io/
+maintainers:
+  - "Dominik Fleischmann <dominik.fleischmann@canonical.com>"
+  - "Kenneth Koski <kenneth.koski@canonical.com>"
+tags: [envoy, proxy, grpc, grpc-web]
+series: [kubernetes]
+resources:
+  oci-image:
+    type: oci-image
+    description: Backing OCI image
+    auto-fetch: true
+    upstream-source: envoyproxy/envoy:v1.12.2
+provides:
+  grpc-web:
+    interface: k8s-service
+requires:
+  grpc:
+    interface: k8s-service
+min-juju-version: 2.8.6

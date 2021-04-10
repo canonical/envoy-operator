@@ -1,0 +1,175 @@
+{
+  "admin": {
+    "accessLogPath": "/tmp/admin_access.log",
+    "address": {
+      "address": "0.0.0.0",
+      "portValue": "9901"
+    }
+  },
+  "static_resources": {
+    "listeners": [
+      {
+        "name": "listener-0",
+        "address": {
+          "address": "0.0.0.0",
+          "portValue": "9090"
+        },
+        "filterChains": [
+          {
+            "filters": [
+              {
+                "name": "envoy.http_connection_manager",
+                "config": {
+                  "routeConfig": {
+                    "name": "local_route",
+                    "virtualHosts": [
+                      {
+                        "domains": [
+                          "*"
+                        ],
+                        "name": "local_service",
+                        "routes": [
+                          {
+                            "match": {
+                              "prefix": "/"
+                            },
+                            "route": {
+                              "cluster": "grpc-one",
+                              "maxGrpcTimeout": "60.000s"
+                            }
+                          }
+                        ],
+                        "cors": {
+                          "allowHeaders": "keep-alive",
+                          "allowMethods": [
+                            "GET",
+                            "PUT",
+                            "DELETE",
+                            "POST",
+                            "OPTIONS"
+                          ],
+                          "allowOrigin": [
+                            "*"
+                          ],
+                          "exposeHeaders": "grpc-status,grpc-message",
+                          "maxAge": "1728000"
+                        }
+                      }
+                    ]
+                  },
+                  "statPrefix": "ingress_http",
+                  "httpFilters": [
+                    {
+                      "name": "envoy.grpc_web"
+                    },
+                    {
+                      "name": "envoy.cors"
+                    },
+                    {
+                      "name": "envoy.router"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "listener-0",
+        "address": {
+          "address": "0.0.0.0",
+          "portValue": "9090"
+        },
+        "filterChains": [
+          {
+            "filters": [
+              {
+                "name": "envoy.http_connection_manager",
+                "config": {
+                  "routeConfig": {
+                    "name": "local_route",
+                    "virtualHosts": [
+                      {
+                        "domains": [
+                          "*"
+                        ],
+                        "name": "local_service",
+                        "routes": [
+                          {
+                            "match": {
+                              "prefix": "/"
+                            },
+                            "route": {
+                              "cluster": "grpc-two",
+                              "maxGrpcTimeout": "60.000s"
+                            }
+                          }
+                        ],
+                        "cors": {
+                          "allowHeaders": "keep-alive",
+                          "allowMethods": [
+                            "GET",
+                            "PUT",
+                            "DELETE",
+                            "POST",
+                            "OPTIONS"
+                          ],
+                          "allowOrigin": [
+                            "*"
+                          ],
+                          "exposeHeaders": "grpc-status,grpc-message",
+                          "maxAge": "1728000"
+                        }
+                      }
+                    ]
+                  },
+                  "statPrefix": "ingress_http",
+                  "httpFilters": [
+                    {
+                      "name": "envoy.grpc_web"
+                    },
+                    {
+                      "name": "envoy.cors"
+                    },
+                    {
+                      "name": "envoy.router"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "clusters": [
+      {
+        "name": "grpc-one",
+        "type": "LOGICAL_DNS",
+        "connectTimeout": "30.000s",
+        "hosts": [
+          {
+            "socketAddress": {
+              "address": "grpc-one",
+              "portValue": "8080"
+            }
+          }
+        ]
+      },
+      {
+        "name": "grpc-two",
+        "type": "LOGICAL_DNS",
+        "connectTimeout": "30.000s",
+        "hosts": [
+          {
+            "socketAddress": {
+              "address": "grpc-two",
+              "portValue": "9090"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
