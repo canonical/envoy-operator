@@ -1,6 +1,7 @@
 import json
 
 import pytest
+import yaml
 from ops.model import ActiveStatus, BlockedStatus
 from ops.testing import Harness
 
@@ -38,7 +39,7 @@ def test_no_relation(harness):
     harness.begin_with_initial_hooks()
 
     assert harness.charm.model.unit.status == BlockedStatus(
-        "No upstream GRPC services."
+        "No upstream gRPC services."
     )
 
 
@@ -57,7 +58,10 @@ def test_many_relations(harness):
     harness.update_relation_data(
         rel_id1,
         "grpc-one",
-        {"service": "grpc-one", "port": "8080"},
+        {
+            "_supported_versions": "- v1",
+            "data": yaml.dump({"service": "grpc-one", "port": "8080"}),
+        },
     )
 
     rel_id2 = harness.add_relation("grpc", "grpc-two")
@@ -65,13 +69,16 @@ def test_many_relations(harness):
     harness.update_relation_data(
         rel_id2,
         "grpc-two",
-        {"service": "grpc-two", "port": "9090"},
+        {
+            "_supported_versions": "- v1",
+            "data": yaml.dump({"service": "grpc-two", "port": "9090"}),
+        },
     )
     harness.begin_with_initial_hooks()
 
     pod_spec, _ = harness.get_pod_spec()
 
-    expected = json.load(open("tests/many_relations.json"))
+    expected = yaml.load(open("tests/many_relations.yaml"))
 
     c = pod_spec["containers"][0]["volumeConfig"][0]["files"][0]["content"]
     assert json.loads(c) == expected
