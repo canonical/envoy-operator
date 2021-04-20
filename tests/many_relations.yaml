@@ -1,0 +1,99 @@
+admin:
+  access_log_path: /tmp/admin_access.log
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: '9901'
+static_resources:
+  clusters:
+  - connect_timeout: 30.000s
+    hosts:
+    - socket_address:
+        address: grpc-one
+        port_value: 8080
+    name: grpc-one
+    type: LOGICAL_DNS
+  - connect_timeout: 30.000s
+    hosts:
+    - socket_address:
+        address: grpc-two
+        port_value: 9090
+    name: grpc-two
+    type: LOGICAL_DNS
+  listeners:
+  - address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 9090
+    filter_chains:
+    - filters:
+      - config:
+          http_filters:
+          - name: envoy.grpc_web
+          - name: envoy.cors
+          - name: envoy.router
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - cors:
+                allow_headers: cache-control,content-transfer-encoding,content-type,grpc-timeout,keep-alive,user-agent,x-accept-content-transfer-encoding,x-accept-response-streaming,x-grpc-web,x-user-agent
+                allow_methods:
+                - GET
+                - PUT
+                - DELETE
+                - POST
+                - OPTIONS
+                allow_origin:
+                - '*'
+                expose_headers: grpc-status,grpc-message
+                max_age: '1728000'
+              domains:
+              - '*'
+              name: local_service
+              routes:
+              - match:
+                  prefix: /
+                route:
+                  cluster: grpc-one
+                  max_grpc_timeout: 60.000s
+          stat_prefix: ingress_http
+        name: envoy.http_connection_manager
+    name: listener-0
+  - address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 9090
+    filter_chains:
+    - filters:
+      - config:
+          http_filters:
+          - name: envoy.grpc_web
+          - name: envoy.cors
+          - name: envoy.router
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - cors:
+                allow_headers: cache-control,content-transfer-encoding,content-type,grpc-timeout,keep-alive,user-agent,x-accept-content-transfer-encoding,x-accept-response-streaming,x-grpc-web,x-user-agent
+                allow_methods:
+                - GET
+                - PUT
+                - DELETE
+                - POST
+                - OPTIONS
+                allow_origin:
+                - '*'
+                expose_headers: grpc-status,grpc-message
+                max_age: '1728000'
+              domains:
+              - '*'
+              name: local_service
+              routes:
+              - match:
+                  prefix: /
+                route:
+                  cluster: grpc-two
+                  max_grpc_timeout: 60.000s
+          stat_prefix: ingress_http
+        name: envoy.http_connection_manager
+    name: listener-0

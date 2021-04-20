@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
 
-import logging
 import json
+import logging
 from datetime import timedelta
 
-from ops.charm import CharmBase
-from ops.main import main
-from ops.model import ActiveStatus, MaintenanceStatus, BlockedStatus
-
-from oci_image import OCIImageResource, OCIImageResourceError
-from envoy_data_plane.envoy.config.bootstrap import v2 as bs
 from envoy_data_plane.envoy.api import v2 as api
+from envoy_data_plane.envoy.config.bootstrap import v2 as bs
 from envoy_data_plane.envoy.config.filter.network.http_connection_manager import (
     v2 as hcm,
 )
+from ops.charm import CharmBase
+from ops.main import main
+from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
+from serialized_data_interface import (
+    NoCompatibleVersions,
+    NoVersionsListed,
+    get_interfaces,
+)
+
+import stringcase
+from oci_image import OCIImageResource, OCIImageResourceError
 
 
 def get_cluster(service: str, port: int):
@@ -34,6 +40,19 @@ def get_cluster(service: str, port: int):
 
 
 def get_listener(cluster: str, port: int):
+    allowed_headers = [
+        "cache-control",
+        "content-transfer-encoding",
+        "content-type",
+        "grpc-timeout",
+        "keep-alive",
+        "user-agent",
+        "x-accept-content-transfer-encoding",
+        "x-accept-response-streaming",
+        "x-grpc-web",
+        "x-user-agent",
+    ]
+
     virtual_host = api.route.VirtualHost(
         name="local_service",
         domains=["*"],
@@ -55,7 +74,7 @@ def get_listener(cluster: str, port: int):
                 "POST",
                 "OPTIONS",
             ],
-            allow_headers="keep-alive",
+            allow_headers=",".join(allowed_headers),
             max_age="1728000",
             expose_headers="grpc-status,grpc-message",
         ),
@@ -79,9 +98,11 @@ def get_listener(cluster: str, port: int):
     )
     return api.Listener(
         name="listener-0",
-        address=api.core.SocketAddress(
-            address="0.0.0.0",
-            port_value=port,
+        address=api.core.Address(
+            socket_address=api.core.SocketAddress(
+                address="0.0.0.0",
+                port_value=port,
+            )
         ),
         filter_chains=[api.listener.FilterChain(filters=[filter])],
     )
@@ -100,16 +121,30 @@ class Operator(CharmBase):
 
         self.image = OCIImageResource(self, "oci-image")
 
+        try:
+            self.interfaces = get_interfaces(self)
+        except NoVersionsListed as err:
+            self.model.unit.status = WaitingStatus(str(err))
+            return
+        except NoCompatibleVersions as err:
+            self.model.unit.status = BlockedStatus(str(err))
+            return
+
         self.framework.observe(self.on.install, self.set_pod_spec)
         self.framework.observe(self.on.upgrade_charm, self.set_pod_spec)
         self.framework.observe(self.on.config_changed, self.set_pod_spec)
         self.framework.observe(self.on["grpc"].relation_changed, self.set_pod_spec)
 
-        self.framework.observe(self.on["grpc-web"].relation_joined, self.send_info)
+        self.framework.observe(self.on["grpc-web"].relation_changed, self.send_info)
 
     def send_info(self, event):
-        event.relation.data[self.unit]["service"] = self.model.app.name
-        event.relation.data[self.unit]["port"] = self.model.config["http-port"]
+        if self.interfaces["grpc-web"]:
+            self.interfaces["grpc-web"].send_data(
+                {
+                    "service-host": self.model.app.name,
+                    "service-port": self.model.config["http-port"],
+                }
+            )
 
     def set_pod_spec(self, event):
         try:
@@ -119,17 +154,25 @@ class Operator(CharmBase):
             self.log.info(e)
             return
 
-        upstreams = [rel.data[rel.app] for rel in self.model.relations["grpc"]]
-
+        upstreams = self.interfaces["grpc"]
         if not upstreams:
-            self.model.unit.status = BlockedStatus("No upstream GRPC services.")
+            self.model.unit.status = BlockedStatus("No upstream gRPC services.")
+            return
+
+        upstreams = list(upstreams.get_data().values())
+        if not all(u.get("service") for u in upstreams):
+            self.model.unit.status = WaitingStatus(
+                "Waiting for upstream gRPC connection information."
+            )
             return
 
         admin = bs.Admin(
             access_log_path="/tmp/admin_access.log",
-            address=api.core.SocketAddress(
-                address="0.0.0.0",
-                port_value=self.model.config["admin-port"],
+            address=api.core.Address(
+                socket_address=api.core.SocketAddress(
+                    address="0.0.0.0",
+                    port_value=self.model.config["admin-port"],
+                ),
             ),
         )
 
@@ -137,14 +180,20 @@ class Operator(CharmBase):
             listeners=[
                 get_listener(
                     cluster=upstream["service"],
-                    port=self.model.config["http-port"],
+                    port=int(self.model.config["http-port"]),
                 )
                 for upstream in upstreams
             ],
-            clusters=[get_cluster(**u) for u in upstreams],
+            clusters=[
+                get_cluster(service=u["service"], port=int(u["port"]))
+                for u in upstreams
+            ],
         )
 
-        config = {"admin": admin.to_dict(), "static_resources": resources.to_dict()}
+        config = {
+            "admin": admin.to_dict(casing=stringcase.snakecase),
+            "static_resources": resources.to_dict(casing=stringcase.snakecase),
+        }
 
         self.model.unit.status = MaintenanceStatus("Setting pod spec")
         self.model.pod.set_spec(
@@ -155,7 +204,7 @@ class Operator(CharmBase):
                         "name": "envoy",
                         "command": ["/usr/local/bin/envoy", "-c"],
                         "args": [
-                            "/envoy/envoy.yaml",
+                            "/envoy/envoy.json",
                         ],
                         "imageDetails": image_details,
                         "ports": [

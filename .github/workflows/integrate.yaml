@@ -5,8 +5,8 @@ on:
   - pull_request
 
 jobs:
-  check-formatting:
-    name: Check Formatting
+  lint:
+    name: Lint Check
     runs-on: ubuntu-latest
 
     steps:
@@ -14,17 +14,26 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Install dependencies
-      run: |
-        sudo apt-get install python3-setuptools
-        sudo pip3 install black flake8
+      run: sudo apt install tox
 
-    - name: Check black
-      run: black --check .
+    - name: Lint code
+      run: tox -e lint
 
-    - name: Check flake8
-      run: flake8
+  unit:
+    name: Unit Test
+    runs-on: ubuntu-latest
 
-  test:
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: sudo apt install tox
+
+    - name: Run unit tests
+      run: tox -e unit
+
+  deploy:
     name: Test
     runs-on: ubuntu-latest
 
@@ -56,6 +65,8 @@ jobs:
         charmcraft build
         juju deploy ./*.charm \
           --resource oci-image=$(yq eval '.resources.oci-image.upstream-source' metadata.yaml)
+        juju deploy cs:mlmd
+        juju relate envoy mlmd
         juju wait -wvt 300
 
     - name: Get all
@@ -66,11 +77,19 @@ jobs:
       run: juju status
       if: failure()
 
-    - name: Get workload logs
-      run: kubectl logs --tail 100 -nci-test -ljuju-app
+    - name: Get envoy workload logs
+      run: kubectl logs --tail 100 -nci-test -ljuju-app=envoy
       if: failure()
 
-    - name: Get operator logs
-      run: kubectl logs --tail 100 -nci-test -ljuju-operator
+    - name: Get envoy operator logs
+      run: kubectl logs --tail 100 -nci-test -ljuju-operator=envoy
+      if: failure()
+
+    - name: Get mlmd workload logs
+      run: kubectl logs --tail 100 -nci-test -ljuju-app=mlmd
+      if: failure()
+
+    - name: Get mlmd operator logs
+      run: kubectl logs --tail 100 -nci-test -ljuju-operator=mlmd
       if: failure()
 
