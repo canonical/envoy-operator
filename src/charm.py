@@ -40,6 +40,14 @@ def get_cluster(service: str, port: int):
 
 
 def get_listener(cluster: str, port: int):
+    allowed_methods = [
+        "GET",
+        "PUT",
+        "DELETE",
+        "POST",
+        "OPTIONS",
+    ]
+
     allowed_headers = [
         "cache-control",
         "content-transfer-encoding",
@@ -67,13 +75,7 @@ def get_listener(cluster: str, port: int):
         ],
         cors=api.route.CorsPolicy(
             allow_origin=["*"],
-            allow_methods=[
-                "GET",
-                "PUT",
-                "DELETE",
-                "POST",
-                "OPTIONS",
-            ],
+            allow_methods=",".join(allowed_methods),
             allow_headers=",".join(allowed_headers),
             max_age="1728000",
             expose_headers="grpc-status,grpc-message",
