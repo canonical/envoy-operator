@@ -48,6 +48,9 @@ jobs:
         addons: '["dns", "storage", "rbac"]'
         channel: 1.21/stable
 
+    - name: Add user to lxd group
+      run: sudo usermod -a -G lxd $USER
+
     - name: Install dependencies
       run: |
         set -eux
