@@ -1,8 +1,10 @@
 name: CI
 
 on:
-  - push
-  - pull_request
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   lint:
@@ -44,6 +46,7 @@ jobs:
     - uses: balchua/microk8s-actions@v0.2.2
       with:
         addons: '["dns", "storage", "rbac"]'
+        channel: 1.22/stable
 
     - name: Install dependencies
       run: |
