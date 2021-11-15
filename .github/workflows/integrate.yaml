@@ -51,7 +51,7 @@ jobs:
     - name: Install dependencies
       run: |
         set -eux
-        sudo snap install charmcraft
+        sudo snap install charmcraft --classic
         sudo snap install juju --classic
         sudo snap install juju-wait --classic
         sudo snap install yq
