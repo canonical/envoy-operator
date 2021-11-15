@@ -78,7 +78,7 @@ def test_many_relations(harness):
 
     pod_spec, _ = harness.get_pod_spec()
 
-    expected = yaml.load(open("tests/many_relations.yaml"))
+    expected = yaml.safe_load(open("tests/many_relations.yaml"))
 
     c = pod_spec["containers"][0]["volumeConfig"][0]["files"][0]["content"]
     assert json.loads(c) == expected
