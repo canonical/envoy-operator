@@ -46,12 +46,12 @@ jobs:
     - uses: balchua/microk8s-actions@v0.2.2
       with:
         addons: '["dns", "storage", "rbac"]'
-        channel: 1.22/stable
+        channel: 1.21/stable
 
     - name: Install dependencies
       run: |
         set -eux
-        sudo pip3 install charmcraft
+        sudo snap install charmcraft
         sudo snap install juju --classic
         sudo snap install juju-wait --classic
         sudo snap install yq
@@ -65,7 +65,7 @@ jobs:
     - name: Deploy charm
       run: |
         set -eux
-        charmcraft build
+        sg lxd -c "charmcraft build"
         juju deploy ./*.charm \
           --resource oci-image=$(yq eval '.resources.oci-image.upstream-source' metadata.yaml)
         juju deploy cs:mlmd
