@@ -61,7 +61,7 @@ jobs:
     - name: Install dependencies
       run: |
         set -eux
-        sudo snap install charmcraft --classic
+        sudo snap install charmcraft --classic --channel=latest/candidate
         sudo snap install juju --classic
         sudo snap install juju-wait --classic
         sudo snap install yq
@@ -75,7 +75,7 @@ jobs:
     - name: Deploy charm
       run: |
         set -eux
-        sg lxd -c "charmcraft build"
+        sg lxd -c "charmcraft pack -p ./"
         juju deploy ./*.charm \
           --resource oci-image=$(yq eval '.resources.oci-image.upstream-source' metadata.yaml)
         juju deploy cs:mlmd
