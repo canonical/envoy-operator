@@ -48,11 +48,6 @@ jobs:
         addons: '["dns", "storage", "rbac"]'
         channel: 1.21/stable
 
-    - name: Setup LXD
-      run: |
-        sudo usermod -a -G lxd $USER
-        sg lxd -c "lxd init --auto"
-
       # Avoid race condition with storage taking a long time to initialize
     - name: Wait for storage
       run: |
@@ -75,7 +70,7 @@ jobs:
     - name: Deploy charm
       run: |
         set -eux
-        sg lxd -c "charmcraft pack -p ./"
+        charmcraft pack --destructive-mode
         juju deploy ./*.charm \
           --resource oci-image=$(yq eval '.resources.oci-image.upstream-source' metadata.yaml)
         juju deploy cs:mlmd
