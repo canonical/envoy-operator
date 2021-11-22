@@ -37,12 +37,7 @@ static_resources:
             virtual_hosts:
             - cors:
                 allow_headers: cache-control,content-transfer-encoding,content-type,grpc-timeout,keep-alive,user-agent,x-accept-content-transfer-encoding,x-accept-response-streaming,x-grpc-web,x-user-agent
-                allow_methods:
-                - GET
-                - PUT
-                - DELETE
-                - POST
-                - OPTIONS
+                allow_methods: GET,PUT,DELETE,POST,OPTIONS
                 allow_origin:
                 - '*'
                 expose_headers: grpc-status,grpc-message
@@ -75,12 +70,7 @@ static_resources:
             virtual_hosts:
             - cors:
                 allow_headers: cache-control,content-transfer-encoding,content-type,grpc-timeout,keep-alive,user-agent,x-accept-content-transfer-encoding,x-accept-response-streaming,x-grpc-web,x-user-agent
-                allow_methods:
-                - GET
-                - PUT
-                - DELETE
-                - POST
-                - OPTIONS
+                allow_methods: GET,PUT,DELETE,POST,OPTIONS
                 allow_origin:
                 - '*'
                 expose_headers: grpc-status,grpc-message

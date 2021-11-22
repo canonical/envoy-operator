@@ -1,8 +1,10 @@
 name: CI
 
 on:
-  - push
-  - pull_request
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   lint:
@@ -44,11 +46,17 @@ jobs:
     - uses: balchua/microk8s-actions@v0.2.2
       with:
         addons: '["dns", "storage", "rbac"]'
+        channel: 1.21/stable
+
+      # Avoid race condition with storage taking a long time to initialize
+    - name: Wait for storage
+      run: |
+        sg microk8s -c 'microk8s kubectl rollout status deployment/hostpath-provisioner -n kube-system'
 
     - name: Install dependencies
       run: |
         set -eux
-        sudo pip3 install charmcraft
+        sudo snap install charmcraft --classic --channel=latest/candidate
         sudo snap install juju --classic
         sudo snap install juju-wait --classic
         sudo snap install yq
@@ -62,7 +70,7 @@ jobs:
     - name: Deploy charm
       run: |
         set -eux
-        charmcraft build
+        charmcraft pack --destructive-mode
         juju deploy ./*.charm \
           --resource oci-image=$(yq eval '.resources.oci-image.upstream-source' metadata.yaml)
         juju deploy cs:mlmd
