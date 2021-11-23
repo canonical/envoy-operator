@@ -1,5 +1,8 @@
+# Copyright 2021 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 envoy_data_plane==0.2.5
 oci-image==1.0.0
-ops==1.1.0
+ops==1.2.0
 serialized-data-interface<0.4.0
 stringcase==1.2.0

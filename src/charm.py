@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright 2021 Canonical Ltd.
+# See LICENSE file for licensing details.
 
 import json
 import logging
@@ -110,6 +112,17 @@ def get_listener(cluster: str, port: int):
     )
 
 
+class CheckFailed(Exception):
+    """ Raise this exception if one of the checks in main fails. """
+
+    def __init__(self, msg, status_type=None):
+        super().__init__()
+
+        self.msg = msg
+        self.status_type = status_type
+        self.status = status_type(msg)
+
+
 class Operator(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
@@ -139,36 +152,23 @@ class Operator(CharmBase):
         self.framework.observe(self.on.config_changed, self.set_pod_spec)
         self.framework.observe(self.on["grpc"].relation_changed, self.set_pod_spec)
 
-        self.framework.observe(self.on["grpc-web"].relation_changed, self.send_info)
-
-    def send_info(self, event):
-        if self.interfaces["grpc-web"]:
-            self.interfaces["grpc-web"].send_data(
-                {
-                    "service-host": self.model.app.name,
-                    "service-port": self.model.config["http-port"],
-                }
-            )
+        self.framework.observe(self.on["grpc-web"].relation_changed, self.set_pod_spec)
 
     def set_pod_spec(self, event):
         try:
-            image_details = self.image.fetch()
-        except OCIImageResourceError as e:
-            self.model.unit.status = e.status
-            self.log.info(e)
+            self._check_leader()
+
+            interfaces = self._get_interfaces()
+
+            image_details = self._check_image_details()
+
+            upstreams = self._check_grpc(interfaces)
+
+        except CheckFailed as check_failed:
+            self.model.unit.status = check_failed.status
             return
 
-        upstreams = self.interfaces["grpc"]
-        if not upstreams:
-            self.model.unit.status = BlockedStatus("No upstream gRPC services.")
-            return
-
-        upstreams = list(upstreams.get_data().values())
-        if not all(u.get("service") for u in upstreams):
-            self.model.unit.status = WaitingStatus(
-                "Waiting for upstream gRPC connection information."
-            )
-            return
+        self._send_info(interfaces)
 
         admin = bs.Admin(
             access_log_path="/tmp/admin_access.log",
@@ -238,6 +238,48 @@ class Operator(CharmBase):
             },
         )
         self.model.unit.status = ActiveStatus()
+
+    def _send_info(self, interfaces):
+        if self.interfaces["grpc-web"]:
+            self.interfaces["grpc-web"].send_data(
+                {
+                    "service-host": self.model.app.name,
+                    "service-port": self.model.config["http-port"],
+                }
+            )
+
+    def _check_leader(self):
+        if not self.unit.is_leader():
+            # We can't do anything useful when not the leader, so do nothing.
+            raise CheckFailed("Waiting for leadership", WaitingStatus)
+
+    def _get_interfaces(self):
+        try:
+            interfaces = get_interfaces(self)
+        except NoVersionsListed as err:
+            raise CheckFailed(err, WaitingStatus)
+        except NoCompatibleVersions as err:
+            raise CheckFailed(err, BlockedStatus)
+        return interfaces
+
+    def _check_image_details(self):
+        try:
+            image_details = self.image.fetch()
+        except OCIImageResourceError as e:
+            raise CheckFailed(f"{e.status.message}", e.status_type)
+        return image_details
+
+    def _check_grpc(self, interfaces):
+        upstreams = interfaces["grpc"]
+        if not upstreams:
+            raise CheckFailed("No upstream gRPC services.", BlockedStatus)
+
+        upstreams = list(upstreams.get_data().values())
+        if not all(u.get("service") for u in upstreams):
+            raise CheckFailed(
+                "Waiting for upstream gRPC connection information.", WaitingStatus
+            )
+        return upstreams
 
 
 if __name__ == "__main__":
