@@ -1,3 +1,6 @@
+# Copyright 2021 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 import json
 
 import pytest
@@ -14,7 +17,7 @@ def harness():
 
 
 def test_not_leader(harness):
-    harness.begin()
+    harness.begin_with_initial_hooks()
     assert harness.charm.model.unit.status == ActiveStatus("")
 
 
