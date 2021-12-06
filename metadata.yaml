@@ -2,7 +2,6 @@
 # See LICENSE file for licensing details.
 
 name: envoy
-display-name: Envoy
 summary: Cloud-native high-performance edge/middle/service proxy
 description: https://www.envoyproxy.io/
 maintainers:
