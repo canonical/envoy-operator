@@ -2,7 +2,7 @@
 
 ### Overview
 This charm encompasses the Kubernetes Python operator for Envoy (see
-[CharmHub](https://charmhub.io/?q=envoy)).
+[CharmHub](https://charmhub.io/envoy)).
 
 The Envoy operator is a Python script that wrap the latest released version of Envoy,
 providing lifecycle management and handling events such as install, upgrade, integrate,
