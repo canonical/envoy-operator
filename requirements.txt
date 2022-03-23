@@ -3,6 +3,6 @@
 
 envoy_data_plane==0.2.5
 oci-image==1.0.0
-ops==1.2.0
+ops==1.3.0
 serialized-data-interface<0.4.0
 stringcase==1.2.0
