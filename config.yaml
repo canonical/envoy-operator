@@ -10,10 +10,6 @@ options:
     type: string
     default: '9090'
     description: Proxied HTTP port
-  metrics-api:
-    type: string
-    default: '/stats/prometheus'
-    description: metrics api route
   metrics-scrape-interval:
     type: string
     default: '30s'

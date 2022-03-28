@@ -115,7 +115,7 @@ def get_listener(cluster: str, port: int):
 
 
 class CheckFailed(Exception):
-    """ Raise this exception if one of the checks in main fails. """
+    """Raise this exception if one of the checks in main fails."""
 
     def __init__(self, msg: str, status_type=None):
         super().__init__()
@@ -134,12 +134,12 @@ class Operator(CharmBase):
 
         self.prometheus_provider = MetricsEndpointProvider(
             charm=self,
-            relation_name="monitoring",
+            relation_name="metrics-endpoint",
             jobs=[
                 {
                     "job_name": "envoy_operator_metrics",
                     "scrape_interval": self.config["metrics-scrape-interval"],
-                    "metrics_path": self.config["metrics-api"],
+                    "metrics_path": "/stats/prometheus",
                     "static_configs": [
                         {"targets": ["*:{}".format(self.config["admin-port"])]}
                     ],
@@ -156,9 +156,9 @@ class Operator(CharmBase):
             self.on.leader_elected,
             self.on["grpc"].relation_changed,
             self.on["grpc-web"].relation_changed,
-            self.on["monitoring"].relation_changed,
-            self.on["monitoring"].relation_broken,
-            self.on["monitoring"].relation_departed,
+            self.on["metrics-endpoint"].relation_changed,
+            self.on["metrics-endpoint"].relation_broken,
+            self.on["metrics-endpoint"].relation_departed,
         ]:
             self.framework.observe(event, self.set_pod_spec)
 
