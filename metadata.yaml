@@ -3,6 +3,7 @@
 name: envoy
 summary: Cloud-native high-performance edge/middle/service proxy
 description: https://www.envoyproxy.io/
+min-juju-version: "2.9.0"
 series: [kubernetes]
 resources:
   oci-image:
