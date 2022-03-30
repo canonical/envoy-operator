@@ -4,7 +4,7 @@ for: 0m
 labels:
   severity: critical
 annotations:
-  summary: Enovy unit {{ $labels.juju_model }}/{{ $labels.juju_unit }} unavailable
+  summary: Envoy unit {{ $labels.juju_model }}/{{ $labels.juju_unit }} unavailable
   description: >
     The Envoy unit {{ $labels.juju_model }} {{ $labels.juju_unit }} is unavailable
     LABELS = {{ $labels }}

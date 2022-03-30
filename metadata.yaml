@@ -17,7 +17,7 @@ provides:
     versions: [v1]
   metrics-endpoint:
     interface: prometheus_scrape
-  grafana-dashboard:
+  grafana-dashboards:
     interface: grafana_dashboard
 requires:
   grpc:

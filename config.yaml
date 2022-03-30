@@ -10,7 +10,3 @@ options:
     type: string
     default: '9090'
     description: Proxied HTTP port
-  metrics-scrape-interval:
-    type: string
-    default: '30s'
-    description: how often metrics are scraped
