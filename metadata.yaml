@@ -16,6 +16,10 @@ provides:
     interface: k8s-service
     schema: https://raw.githubusercontent.com/canonical/operator-schemas/master/k8s-service.yaml
     versions: [v1]
+  metrics-endpoint:
+    interface: prometheus_scrape
+  grafana-dashboards:
+    interface: grafana_dashboard
 requires:
   grpc:
     interface: grpc

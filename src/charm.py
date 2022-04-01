@@ -6,6 +6,8 @@ import json
 import logging
 from datetime import timedelta
 
+from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
+from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from envoy_data_plane.envoy.api import v2 as api
 from envoy_data_plane.envoy.config.bootstrap import v2 as bs
 from envoy_data_plane.envoy.config.filter.network.http_connection_manager import (
@@ -22,6 +24,8 @@ from serialized_data_interface import (
 
 import stringcase
 from oci_image import OCIImageResource, OCIImageResourceError
+
+METRICS_PATH = "/stats/prometheus"
 
 
 def get_cluster(service: str, port: int):
@@ -113,7 +117,7 @@ def get_listener(cluster: str, port: int):
 
 
 class CheckFailed(Exception):
-    """ Raise this exception if one of the checks in main fails. """
+    """Raise this exception if one of the checks in main fails."""
 
     def __init__(self, msg: str, status_type=None):
         super().__init__()
@@ -127,32 +131,36 @@ class Operator(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self.log = logging.getLogger()
-
-        if not self.model.unit.is_leader():
-            self.log.info("Not a leader, skipping set_pod_spec")
-            self.model.unit.status = ActiveStatus()
-            return
-
+        self.log = logging.getLogger(__name__)
         self.image = OCIImageResource(self, "oci-image")
 
-        try:
-            self.interfaces = get_interfaces(self)
-        except NoVersionsListed as err:
-            self.model.unit.status = WaitingStatus(str(err))
-            return
-        except NoCompatibleVersions as err:
-            self.model.unit.status = BlockedStatus(str(err))
-            return
-        else:
-            self.model.unit.status = ActiveStatus()
+        self.prometheus_provider = MetricsEndpointProvider(
+            charm=self,
+            jobs=[
+                {
+                    "job_name": "envoy_operator_metrics",
+                    "metrics_path": METRICS_PATH,
+                    "static_configs": [
+                        {"targets": ["*:{}".format(self.config["admin-port"])]}
+                    ],
+                }
+            ],
+        )
 
-        self.framework.observe(self.on.install, self.set_pod_spec)
-        self.framework.observe(self.on.upgrade_charm, self.set_pod_spec)
-        self.framework.observe(self.on.config_changed, self.set_pod_spec)
-        self.framework.observe(self.on["grpc"].relation_changed, self.set_pod_spec)
+        self.dashboard_provider = GrafanaDashboardProvider(
+            self,
+            relation_name="grafana-dashboards",
+        )
 
-        self.framework.observe(self.on["grpc-web"].relation_changed, self.set_pod_spec)
+        for event in [
+            self.on.start,
+            self.on.upgrade_charm,
+            self.on.config_changed,
+            self.on.leader_elected,
+            self.on["grpc"].relation_changed,
+            self.on["grpc-web"].relation_changed,
+        ]:
+            self.framework.observe(event, self.set_pod_spec)
 
     def set_pod_spec(self, event):
         try:
@@ -164,11 +172,10 @@ class Operator(CharmBase):
 
             upstreams = self._check_grpc(interfaces)
 
+            self._send_info(interfaces)
         except CheckFailed as check_failed:
             self.model.unit.status = check_failed.status
             return
-
-        self._send_info(interfaces)
 
         admin = bs.Admin(
             access_log_path="/tmp/admin_access.log",
@@ -240,8 +247,8 @@ class Operator(CharmBase):
         self.model.unit.status = ActiveStatus()
 
     def _send_info(self, interfaces):
-        if self.interfaces["grpc-web"]:
-            self.interfaces["grpc-web"].send_data(
+        if interfaces["grpc-web"]:
+            interfaces["grpc-web"].send_data(
                 {
                     "service-host": self.model.app.name,
                     "service-port": self.model.config["http-port"],
