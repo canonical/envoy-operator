@@ -24,9 +24,7 @@ def test_not_leader(harness):
 def test_missing_image(harness):
     harness.set_leader(True)
     harness.begin_with_initial_hooks()
-    assert harness.charm.model.unit.status == BlockedStatus(
-        "Missing resource: oci-image"
-    )
+    assert harness.charm.model.unit.status == BlockedStatus("Missing resource: oci-image")
 
 
 def test_no_relation(harness):
@@ -41,9 +39,7 @@ def test_no_relation(harness):
     )
     harness.begin_with_initial_hooks()
 
-    assert harness.charm.model.unit.status == BlockedStatus(
-        "No upstream gRPC services."
-    )
+    assert harness.charm.model.unit.status == BlockedStatus("No upstream gRPC services.")
 
 
 def test_many_relations(harness):
