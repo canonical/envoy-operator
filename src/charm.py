@@ -6,24 +6,17 @@ import json
 import logging
 from datetime import timedelta
 
+import stringcase
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from envoy_data_plane.envoy.api import v2 as api
 from envoy_data_plane.envoy.config.bootstrap import v2 as bs
-from envoy_data_plane.envoy.config.filter.network.http_connection_manager import (
-    v2 as hcm,
-)
+from envoy_data_plane.envoy.config.filter.network.http_connection_manager import v2 as hcm
+from oci_image import OCIImageResource, OCIImageResourceError
 from ops.charm import CharmBase
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
-from serialized_data_interface import (
-    NoCompatibleVersions,
-    NoVersionsListed,
-    get_interfaces,
-)
-
-import stringcase
-from oci_image import OCIImageResource, OCIImageResourceError
+from serialized_data_interface import NoCompatibleVersions, NoVersionsListed, get_interfaces
 
 METRICS_PATH = "/stats/prometheus"
 
@@ -88,7 +81,7 @@ def get_listener(cluster: str, port: int):
         ),
     )
 
-    filter = api.listener.Filter(
+    filter_listener = api.listener.Filter(
         name="envoy.http_connection_manager",
         config=hcm.HttpConnectionManager(
             codec_type=hcm.HttpConnectionManagerCodecType.AUTO,
@@ -112,7 +105,7 @@ def get_listener(cluster: str, port: int):
                 port_value=port,
             )
         ),
-        filter_chains=[api.listener.FilterChain(filters=[filter])],
+        filter_chains=[api.listener.FilterChain(filters=[filter_listener])],
     )
 
 
@@ -140,9 +133,7 @@ class Operator(CharmBase):
                 {
                     "job_name": "envoy_operator_metrics",
                     "metrics_path": METRICS_PATH,
-                    "static_configs": [
-                        {"targets": ["*:{}".format(self.config["admin-port"])]}
-                    ],
+                    "static_configs": [{"targets": ["*:{}".format(self.config["admin-port"])]}],
                 }
             ],
         )
@@ -195,10 +186,7 @@ class Operator(CharmBase):
                 )
                 for upstream in upstreams
             ],
-            clusters=[
-                get_cluster(service=u["service"], port=int(u["port"]))
-                for u in upstreams
-            ],
+            clusters=[get_cluster(service=u["service"], port=int(u["port"])) for u in upstreams],
         )
 
         config = {
@@ -283,9 +271,7 @@ class Operator(CharmBase):
 
         upstreams = list(upstreams.get_data().values())
         if not all(u.get("service") for u in upstreams):
-            raise CheckFailed(
-                "Waiting for upstream gRPC connection information.", WaitingStatus
-            )
+            raise CheckFailed("Waiting for upstream gRPC connection information.", WaitingStatus)
         return upstreams
 
 
