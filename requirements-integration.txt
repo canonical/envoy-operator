@@ -84,7 +84,7 @@ hyperframe==6.0.1
     #   -r ./requirements.txt
     #   h2
     #   selenium-wire
-idna==2.10
+idna==3.4
     # via
     #   -r ./requirements.txt
     #   requests
