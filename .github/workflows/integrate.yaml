@@ -51,7 +51,7 @@ jobs:
     - name: Check out repo
       uses: actions/checkout@v2
 
-    - uses: balchua/microk8s-actions@v0.2.2
+    - uses: balchua/microk8s-actions@v0.3.2
       with:
         addons: '["dns", "storage", "rbac"]'
         channel: 1.21/stable
