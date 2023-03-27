@@ -21,7 +21,7 @@ jobs:
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Install dependencies
       run: sudo apt install tox
@@ -35,7 +35,7 @@ jobs:
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Install dependencies
       run: sudo apt install tox
@@ -49,7 +49,7 @@ jobs:
 
     steps:
     - name: Check out repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - uses: balchua/microk8s-actions@v0.2.2
       with:
