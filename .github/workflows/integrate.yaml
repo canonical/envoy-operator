@@ -44,7 +44,7 @@ jobs:
       run: tox -e unit
 
   deploy:
-    name: Test
+    name: Integration Tests
     runs-on: ubuntu-20.04
 
     steps:
@@ -61,7 +61,6 @@ jobs:
 
     - name: Test
       run: sg snap_microk8s -c "tox -vve integration -- --model testing"
-
 
     - name: Get all
       run: kubectl get all -A
