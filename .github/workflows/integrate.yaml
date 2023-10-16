@@ -51,39 +51,17 @@ jobs:
     - name: Check out repo
       uses: actions/checkout@v2
 
-    - uses: balchua/microk8s-actions@v0.2.2
+    - name: Setup operator environment
+      uses: charmed-kubernetes/actions-operator@main
       with:
-        addons: '["dns", "storage", "rbac"]'
-        channel: 1.21/stable
+        provider: microk8s
+        channel: 1.25-strict/stable
+        juju-channel: 3.1/stable
+        microk8s-addons: "dns storage rbac metallb:10.64.140.43-10.64.140.49"
 
-      # Avoid race condition with storage taking a long time to initialize
-    - name: Wait for storage
-      run: |
-        sg microk8s -c 'microk8s kubectl rollout status deployment/hostpath-provisioner -n kube-system'
+    - name: Test
+      run: sg snap_microk8s -c "tox -vve integration -- --model testing"
 
-    - name: Install dependencies
-      run: |
-        set -eux
-        sudo snap install charmcraft --classic --channel=latest/candidate
-        sudo snap install juju --classic
-        sudo snap install juju-wait --classic
-        sudo snap install yq
-
-    - name: Bootstrap Juju
-      run: |
-        set -eux
-        sg microk8s -c 'juju bootstrap microk8s uk8s'
-        juju add-model ci-test
-
-    - name: Deploy charm
-      run: |
-        set -eux
-        charmcraft pack --destructive-mode
-        juju deploy ./*.charm \
-          --resource oci-image=$(yq eval '.resources.oci-image.upstream-source' metadata.yaml)
-        juju deploy cs:mlmd
-        juju relate envoy mlmd
-        juju wait -wvt 300
 
     - name: Get all
       run: kubectl get all -A
@@ -108,3 +86,7 @@ jobs:
     - name: Get mlmd operator logs
       run: kubectl logs --tail 100 -nci-test -ljuju-operator=mlmd
       if: failure()
+
+    - name: Collect charm debug artifacts
+      uses: canonical/kubeflow-ci/actions/dump-charm-debug-artifacts@main
+      if: always()
