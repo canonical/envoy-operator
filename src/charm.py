@@ -26,6 +26,7 @@ def get_cluster(service: str, port: int):
         name=service,
         connect_timeout=timedelta(seconds=30),
         type=api.ClusterDiscoveryType.LOGICAL_DNS,
+        http2_protocol_options=api.core.Http2ProtocolOptions(),
         lb_policy=api.ClusterLbPolicy.ROUND_ROBIN,
         hosts=[
             api.core.Address(
@@ -58,6 +59,7 @@ def get_listener(cluster: str, port: int):
         "x-accept-response-streaming",
         "x-grpc-web",
         "x-user-agent",
+        "custom-header-1",
     ]
 
     virtual_host = api.route.VirtualHost(
@@ -68,7 +70,7 @@ def get_listener(cluster: str, port: int):
                 match=api.route.RouteMatch(prefix="/"),
                 route=api.route.RouteAction(
                     cluster=cluster,
-                    max_grpc_timeout=timedelta(seconds=60),
+                    max_grpc_timeout=timedelta(seconds=0),
                 ),
             )
         ],
@@ -77,7 +79,7 @@ def get_listener(cluster: str, port: int):
             allow_methods=",".join(allowed_methods),
             allow_headers=",".join(allowed_headers),
             max_age="1728000",
-            expose_headers="grpc-status,grpc-message",
+            expose_headers="grpc-status,grpc-message,custom-header-1",
         ),
     )
 
