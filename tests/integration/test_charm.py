@@ -37,15 +37,15 @@ async def test_build_and_deploy(ops_test):
     assert [app.entity_id for app in relation.applications] == [APP_NAME, "mlmd"]
     assert all([endpoint.name == "grpc" for endpoint in relation.endpoints])
 
-
+@pytest.mark.abort_on_fail
 async def test_deploy_with_prometheus_and_grafana(ops_test):
     scrape_config = {"scrape_interval": "30s"}
-    await ops_test.model.deploy(PROMETHEUS, channel="latest/beta")
-    await ops_test.model.deploy(GRAFANA, channel="latest/beta")
-    await ops_test.model.deploy(PROMETHEUS_SCRAPE, channel="latest/beta", config=scrape_config)
+    await ops_test.model.deploy(PROMETHEUS, channel="latest/beta", trust=True)
+    await ops_test.model.deploy(GRAFANA, channel="latest/beta", trust = True)
+    await ops_test.model.deploy(PROMETHEUS_SCRAPE, channel="latest/beta", trust=True, config=scrape_config)
     await ops_test.model.add_relation(APP_NAME, PROMETHEUS_SCRAPE)
-    await ops_test.model.add_relation(PROMETHEUS, PROMETHEUS_SCRAPE)
-    await ops_test.model.add_relation(PROMETHEUS, GRAFANA)
+    await ops_test.model.add_relation(f"{PROMETHEUS}:metrics-endpoint", f"{PROMETHEUS_SCRAPE}:metrics-endpoint")
+    await ops_test.model.add_relation(f"{PROMETHEUS}:grafana-dashboard", f"{GRAFANA}:grafana-dashboard")
     await ops_test.model.add_relation(APP_NAME, GRAFANA)
     await ops_test.model.add_relation(PROMETHEUS, APP_NAME)
 
