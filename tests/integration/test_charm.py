@@ -19,7 +19,7 @@ CHARM_ROOT = "."
 PROMETHEUS = "prometheus-k8s"
 GRAFANA = "grafana-k8s"
 PROMETHEUS_SCRAPE = "prometheus-scrape-config-k8s"
-MLMD="mlmd"
+MLMD = "mlmd"
 
 
 @pytest.mark.abort_on_fail
