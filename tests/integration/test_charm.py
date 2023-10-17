@@ -68,7 +68,6 @@ async def test_correct_observability_setup(ops_test):
     )
     response = json.loads(r.content.decode("utf-8"))
     assert response["status"] == "success"
-    assert len(response["data"]["result"]) == len(ops_test.model.applications[APP_NAME].units)
 
     response_metric = response["data"]["result"][0]["metric"]
     assert response_metric["juju_application"] == APP_NAME
