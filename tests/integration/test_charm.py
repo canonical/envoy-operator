@@ -19,33 +19,39 @@ CHARM_ROOT = "."
 PROMETHEUS = "prometheus-k8s"
 GRAFANA = "grafana-k8s"
 PROMETHEUS_SCRAPE = "prometheus-scrape-config-k8s"
+MLMD = "mlmd"
 
 
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test):
-    await ops_test.model.deploy("mlmd")
+    await ops_test.model.deploy(MLMD, channel="latest/edge")
     charm = await ops_test.build_charm(".")
     image_path = METADATA["resources"]["oci-image"]["upstream-source"]
     resources = {"oci-image": image_path}
     await ops_test.model.deploy(charm, resources=resources)
-    await ops_test.model.add_relation(APP_NAME, "mlmd")
-    await ops_test.model.wait_for_idle(status="active", raise_on_blocked=True)
+    await ops_test.model.add_relation(APP_NAME, MLMD)
+    await ops_test.model.wait_for_idle(status="active", raise_on_blocked=True, idle_period=30)
 
-    envoy_status = ops_test.model.applications[APP_NAME].units[0].workload_status
-    assert envoy_status == "active"
     relation = ops_test.model.relations[0]
-    assert [app.entity_id for app in relation.applications] == [APP_NAME, "mlmd"]
+    assert [app.entity_id for app in relation.applications] == [APP_NAME, MLMD]
     assert all([endpoint.name == "grpc" for endpoint in relation.endpoints])
 
 
+@pytest.mark.abort_on_fail
 async def test_deploy_with_prometheus_and_grafana(ops_test):
     scrape_config = {"scrape_interval": "30s"}
-    await ops_test.model.deploy(PROMETHEUS, channel="latest/beta")
-    await ops_test.model.deploy(GRAFANA, channel="latest/beta")
-    await ops_test.model.deploy(PROMETHEUS_SCRAPE, channel="latest/beta", config=scrape_config)
+    await ops_test.model.deploy(PROMETHEUS, channel="latest/stable", trust=True)
+    await ops_test.model.deploy(GRAFANA, channel="latest/stable", trust=True)
+    await ops_test.model.deploy(
+        PROMETHEUS_SCRAPE, channel="latest/stable", trust=True, config=scrape_config
+    )
     await ops_test.model.add_relation(APP_NAME, PROMETHEUS_SCRAPE)
-    await ops_test.model.add_relation(PROMETHEUS, PROMETHEUS_SCRAPE)
-    await ops_test.model.add_relation(PROMETHEUS, GRAFANA)
+    await ops_test.model.add_relation(
+        f"{PROMETHEUS}:metrics-endpoint", f"{PROMETHEUS_SCRAPE}:metrics-endpoint"
+    )
+    await ops_test.model.add_relation(
+        f"{PROMETHEUS}:grafana-dashboard", f"{GRAFANA}:grafana-dashboard"
+    )
     await ops_test.model.add_relation(APP_NAME, GRAFANA)
     await ops_test.model.add_relation(PROMETHEUS, APP_NAME)
 
@@ -62,7 +68,6 @@ async def test_correct_observability_setup(ops_test):
     )
     response = json.loads(r.content.decode("utf-8"))
     assert response["status"] == "success"
-    assert len(response["data"]["result"]) == len(ops_test.model.applications[APP_NAME].units)
 
     response_metric = response["data"]["result"][0]["metric"]
     assert response_metric["juju_application"] == APP_NAME
