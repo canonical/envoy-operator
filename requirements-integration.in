@@ -2,4 +2,6 @@ juju
 pytest-operator
 selenium
 selenium-wire
+lightkube
+aiohttp
 -r requirements.txt
