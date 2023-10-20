@@ -66,14 +66,14 @@ async def test_virtual_service(ops_test, lightkube_client):
         trust=True,
     )
     await ops_test.model.add_relation(f"{ISTIO_PILOT}:{ISTIO_PILOT}", f"{ISTIO_GW}:{ISTIO_PILOT}")
+    await ops_test.model.add_relation(ISTIO_PILOT, APP_NAME)
 
     await ops_test.model.wait_for_idle(
+        status="active",
         raise_on_blocked=False,
         raise_on_error=True,
         timeout=300,
     )
-
-    await ops_test.model.add_relation(ISTIO_PILOT, APP_NAME)
 
     # Verify that virtualService is as expected
     assert_virtualservice_exists(name=APP_NAME, namespace=ops_test.model.name)
