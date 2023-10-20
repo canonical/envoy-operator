@@ -29,14 +29,8 @@ def test_missing_image(harness):
 
 def test_no_relation(harness):
     harness.set_leader(True)
-    harness.add_oci_resource(
-        "oci-image",
-        {
-            "registrypath": "ci-test",
-            "username": "",
-            "password": "",
-        },
-    )
+    add_oci_image(harness)
+
     harness.begin_with_initial_hooks()
 
     assert harness.charm.model.unit.status == BlockedStatus("No upstream gRPC services.")
@@ -44,35 +38,10 @@ def test_no_relation(harness):
 
 def test_many_relations(harness):
     harness.set_leader(True)
-    harness.add_oci_resource(
-        "oci-image",
-        {
-            "registrypath": "ci-test",
-            "username": "",
-            "password": "",
-        },
-    )
-    rel_id1 = harness.add_relation("grpc", "grpc-one")
-    harness.add_relation_unit(rel_id1, "grpc-one/0")
-    harness.update_relation_data(
-        rel_id1,
-        "grpc-one",
-        {
-            "_supported_versions": "- v1",
-            "data": yaml.dump({"service": "grpc-one", "port": "8080"}),
-        },
-    )
+    add_oci_image(harness)
 
-    rel_id2 = harness.add_relation("grpc", "grpc-two")
-    harness.add_relation_unit(rel_id2, "grpc-two/0")
-    harness.update_relation_data(
-        rel_id2,
-        "grpc-two",
-        {
-            "_supported_versions": "- v1",
-            "data": yaml.dump({"service": "grpc-two", "port": "9090"}),
-        },
-    )
+    setup_grpc_relation(harness, "grpc-one", "8080")
+    setup_grpc_relation(harness, "grpc-two", "9090")
     harness.begin_with_initial_hooks()
 
     pod_spec, _ = harness.get_pod_spec()
@@ -83,3 +52,29 @@ def test_many_relations(harness):
     assert json.loads(c) == expected
 
     assert harness.charm.model.unit.status == ActiveStatus("")
+
+
+# Helper functions
+def add_oci_image(harness: Harness):
+    harness.add_oci_resource(
+        "oci-image",
+        {
+            "registrypath": "ci-test",
+            "username": "",
+            "password": "",
+        },
+    )
+
+
+def setup_grpc_relation(harness: Harness, name: str, port: str):
+    rel_id = harness.add_relation("grpc", name)
+    harness.add_relation_unit(rel_id, f"{name}/0")
+    harness.update_relation_data(
+        rel_id,
+        name,
+        {
+            "_supported_versions": "- v1",
+            "data": yaml.dump({"service": name, "port": port}),
+        },
+    )
+    return rel_id
