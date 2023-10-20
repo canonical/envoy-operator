@@ -152,6 +152,7 @@ class Operator(CharmBase):
             self.on.leader_elected,
             self.on["grpc"].relation_changed,
             self.on["grpc-web"].relation_changed,
+            self.on["ingress"].relation_changed,
         ]:
             self.framework.observe(event, self.set_pod_spec)
 
@@ -166,6 +167,9 @@ class Operator(CharmBase):
             upstreams = self._check_grpc(interfaces)
 
             self._send_info(interfaces)
+
+            self._configure_mesh(interfaces)
+
         except CheckFailed as check_failed:
             self.model.unit.status = check_failed.status
             return
@@ -275,6 +279,17 @@ class Operator(CharmBase):
         if not all(u.get("service") for u in upstreams):
             raise CheckFailed("Waiting for upstream gRPC connection information.", WaitingStatus)
         return upstreams
+
+    def _configure_mesh(self, interfaces):
+        if interfaces["ingress"]:
+            interfaces["ingress"].send_data(
+                {
+                    "prefix": "/ml_metadata",
+                    "rewrite": "/ml_metadata",
+                    "service": self.model.app.name,
+                    "port": int(self.model.config["http-port"]),
+                }
+            )
 
 
 if __name__ == "__main__":
