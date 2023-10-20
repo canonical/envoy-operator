@@ -54,6 +54,20 @@ def test_many_relations(harness):
     assert harness.charm.model.unit.status == ActiveStatus("")
 
 
+def test_with_ingress_relation(harness):
+    harness.set_leader(True)
+    add_oci_image(harness)
+
+    # Set required grpc relation
+    setup_grpc_relation(harness, "grpc-one", "8080")
+
+    setup_ingress_relation(harness)
+
+    harness.begin_with_initial_hooks()
+
+    assert isinstance(harness.charm.model.unit.status, ActiveStatus)
+
+
 # Helper functions
 def add_oci_image(harness: Harness):
     harness.add_oci_resource(
@@ -64,6 +78,17 @@ def add_oci_image(harness: Harness):
             "password": "",
         },
     )
+
+
+def setup_ingress_relation(harness: Harness):
+    rel_id = harness.add_relation("ingress", "istio-pilot")
+    harness.add_relation_unit(rel_id, "istio-pilot/0")
+    harness.update_relation_data(
+        rel_id,
+        "istio-pilot",
+        {"_supported_versions": "- v1"},
+    )
+    return rel_id
 
 
 def setup_grpc_relation(harness: Harness, name: str, port: str):
