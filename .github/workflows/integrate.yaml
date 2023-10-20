@@ -71,19 +71,19 @@ jobs:
       if: failure()
 
     - name: Get envoy workload logs
-      run: kubectl logs --tail 100 -nci-test -ljuju-app=envoy
+      run: kubectl logs --tail 100 -ntesting -ljuju-app=envoy
       if: failure()
 
     - name: Get envoy operator logs
-      run: kubectl logs --tail 100 -nci-test -ljuju-operator=envoy
+      run: kubectl logs --tail 100 -ntesting -ljuju-operator=envoy
       if: failure()
 
     - name: Get mlmd workload logs
-      run: kubectl logs --tail 100 -nci-test -ljuju-app=mlmd
+      run: kubectl logs --tail 100 -ntesting -ljuju-app=mlmd
       if: failure()
 
     - name: Get mlmd operator logs
-      run: kubectl logs --tail 100 -nci-test -ljuju-operator=mlmd
+      run: kubectl logs --tail 100 -ntesting -ljuju-operator=mlmd
       if: failure()
 
     - name: Collect charm debug artifacts
