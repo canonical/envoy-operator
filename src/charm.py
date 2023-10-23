@@ -168,7 +168,7 @@ class Operator(CharmBase):
 
             self._send_info(interfaces)
 
-            self._configure_mesh(interfaces)
+            self._send_data_to_ingress_provider(interfaces)
 
         except CheckFailed as check_failed:
             self.model.unit.status = check_failed.status
@@ -280,7 +280,10 @@ class Operator(CharmBase):
             raise CheckFailed("Waiting for upstream gRPC connection information.", WaitingStatus)
         return upstreams
 
-    def _configure_mesh(self, interfaces):
+    def _send_data_to_ingress_provider(self, interfaces):
+        """Send data to the ingress relation data bag so the VirtualServices provider configures
+        a VirtualService routing traffic from `/ml_metadata` path to envoy service.
+        """
         if interfaces["ingress"]:
             interfaces["ingress"].send_data(
                 {
