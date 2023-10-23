@@ -42,6 +42,8 @@ def test_many_relations(harness):
 
     setup_grpc_relation(harness, "grpc-one", "8080")
     setup_grpc_relation(harness, "grpc-two", "9090")
+    # In order to avoid the charm going to Blocked
+    setup_ingress_relation(harness)
     harness.begin_with_initial_hooks()
 
     pod_spec, _ = harness.get_pod_spec()

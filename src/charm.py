@@ -283,6 +283,8 @@ class Operator(CharmBase):
     def _send_data_to_ingress_provider(self, interfaces):
         """Send data to the ingress relation data bag so the VirtualServices provider configures
         a VirtualService routing traffic from `/ml_metadata` path to envoy service.
+
+        Raises an exception and sets the charm to Blocked if there is no ingress relation available
         """
         if interfaces["ingress"]:
             interfaces["ingress"].send_data(
@@ -292,6 +294,11 @@ class Operator(CharmBase):
                     "service": self.model.app.name,
                     "port": int(self.model.config["http-port"]),
                 }
+            )
+        else:
+            raise CheckFailed(
+                "No 'ingress' relation available, please relate to a VirtualServices provider e.g. istio-pilot.",  # noqa E501
+                BlockedStatus,
             )
 
 

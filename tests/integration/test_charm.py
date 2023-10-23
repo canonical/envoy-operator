@@ -42,7 +42,12 @@ async def test_build_and_deploy(ops_test):
     resources = {"oci-image": image_path}
     await ops_test.model.deploy(charm, resources=resources)
     await ops_test.model.add_relation(APP_NAME, MLMD)
-    await ops_test.model.wait_for_idle(status="active", raise_on_blocked=True, idle_period=30)
+    await ops_test.model.wait_for_idle(
+        apps=[MLMD], status="active", raise_on_blocked=False, idle_period=30
+    )
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME], status="blocked", raise_on_blocked=False, idle_period=30
+    )
 
     relation = ops_test.model.relations[0]
     assert [app.entity_id for app in relation.applications] == [APP_NAME, MLMD]
