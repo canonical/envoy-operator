@@ -89,7 +89,7 @@ async def test_virtual_service(ops_test, lightkube_client):
     # Verify `/ml_metadata` endpoint is served
     await assert_metadata_endpoint_is_served(ops_test, lightkube_client=lightkube_client)
 
-    assert res_status != 404
+    await assert_grpc_web_protocol_responds(ops_test, lightkube_client=lightkube_client)
 
 
 @pytest.mark.abort_on_fail
@@ -157,22 +157,42 @@ async def assert_metadata_endpoint_is_served(ops_test, lightkube_client):
     assert res_status != 404
     log.info("Endpoint /ml_metadata is reachable.")
 
+
+@tenacity.retry(
+    stop=tenacity.stop_after_delay(10),
+    wait=tenacity.wait_fixed(2),
+    reraise=True,
+)
+async def assert_grpc_web_protocol_responds(ops_test, lightkube_client):
+    regular_ingress_gateway_ip = await get_gateway_ip(
+        namespace=ops_test.model.name, lightkube_client=lightkube_client
+    )
+    headers = {"Content-Type": "application/grpc-web-text"}
+    res_status, res_headers = await fetch_response(
+        f"http://{regular_ingress_gateway_ip}/ml_metadata", headers
+    )
+    assert res_status == 200
+    log.info("Endpoint /ml_metadata serves grpc-web protocol.")
+
+
 async def fetch_response(url, headers=None):
     """Fetch provided URL and return pair - status and text (int, string)."""
-    result_status = 0
-    result_text = ""
+
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as response:
             result_status = response.status
             result_text = await response.text()
-    return result_status, str(result_text)
+            result_headers = response.headers
+    if headers is None:
+        return result_status, str(result_text)
+    else:
+        return result_status, result_headers
 
 
 async def get_gateway_ip(
     namespace: str, lightkube_client, service_name: str = "istio-ingressgateway-workload"
 ):
     log.info(f"Getting {service_name} ingress ip")
-    lightkube_client = Client()
     service = lightkube_client.get(Service, service_name, namespace=namespace)
     gateway_ip = service.status.loadBalancer.ingress[0].ip
     return gateway_ip
