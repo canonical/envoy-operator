@@ -8,6 +8,7 @@ from pathlib import Path
 import aiohttp
 import pytest
 import requests
+import tenacity
 import yaml
 from lightkube import Client
 from lightkube.generic_resource import create_namespaced_resource
@@ -81,11 +82,13 @@ async def test_virtual_service(ops_test, lightkube_client):
     )
 
     # Verify that virtualService is as expected
-    assert_virtualservice_exists(name=APP_NAME, namespace=ops_test.model.name)
+    assert_virtualservice_exists(
+        name=APP_NAME, namespace=ops_test.model.name, lightkube_client=lightkube_client
+    )
 
     # Verify `/ml_metadata` endpoint is served
-    regular_ingress_gateway_ip = await get_gateway_ip(namespace=ops_test.model.name)
-    res_status, res_text = await fetch_response(f"http://{regular_ingress_gateway_ip}/ml_metadata")
+    await assert_metadata_endpoint_is_served(ops_test, lightkube_client=lightkube_client)
+
     assert res_status != 404
 
 
@@ -128,10 +131,9 @@ async def test_correct_observability_setup(ops_test):
     assert response_metric["juju_unit"] == f"{APP_NAME}/0"
 
 
-def assert_virtualservice_exists(name: str, namespace: str):
+def assert_virtualservice_exists(name: str, namespace: str, lightkube_client):
     """Will raise a ApiError(404) if the virtualservice does not exist."""
     log.info(f"Asserting that  VirtualService '{name}' exists.")
-    lightkube_client = Client()
     virtual_service_lightkube_resource = create_namespaced_resource(
         group="networking.istio.io",
         version="v1alpha3",
@@ -141,6 +143,19 @@ def assert_virtualservice_exists(name: str, namespace: str):
     lightkube_client.get(virtual_service_lightkube_resource, name, namespace=namespace)
     log.info(f"VirtualService '{name}' exists.")
 
+
+@tenacity.retry(
+    stop=tenacity.stop_after_delay(10),
+    wait=tenacity.wait_fixed(2),
+    reraise=True,
+)
+async def assert_metadata_endpoint_is_served(ops_test, lightkube_client):
+    regular_ingress_gateway_ip = await get_gateway_ip(
+        namespace=ops_test.model.name, lightkube_client=lightkube_client
+    )
+    res_status, res_text = await fetch_response(f"http://{regular_ingress_gateway_ip}/ml_metadata")
+    assert res_status != 404
+    log.info("Endpoint /ml_metadata is reachable.")
 
 async def fetch_response(url, headers=None):
     """Fetch provided URL and return pair - status and text (int, string)."""
@@ -154,8 +169,7 @@ async def fetch_response(url, headers=None):
 
 
 async def get_gateway_ip(
-    namespace: str,
-    service_name: str = "istio-ingressgateway-workload",
+    namespace: str, lightkube_client, service_name: str = "istio-ingressgateway-workload"
 ):
     log.info(f"Getting {service_name} ingress ip")
     lightkube_client = Client()

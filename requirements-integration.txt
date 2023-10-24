@@ -295,6 +295,8 @@ stack-data==0.6.3
     # via ipython
 stringcase==1.2.0
     # via -r requirements.txt
+tenacity==8.2.3
+    # via -r requirements-integration.in
 tomli==2.0.1
     # via
     #   ipdb

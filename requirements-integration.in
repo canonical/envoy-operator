@@ -4,4 +4,5 @@ selenium
 selenium-wire
 lightkube
 aiohttp
+tenacity
 -r requirements.txt
