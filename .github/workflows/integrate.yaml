@@ -57,7 +57,7 @@ jobs:
         provider: microk8s
         channel: 1.25-strict/stable
         juju-channel: 3.1/stable
-        microk8s-addons: "dns hostpath-storage rbac"
+        microk8s-addons: "dns hostpath-storage rbac metallb:10.64.140.43-10.64.140.49"
 
     - name: Test
       run: sg snap_microk8s -c "tox -vve integration -- --model testing"
@@ -71,19 +71,27 @@ jobs:
       if: failure()
 
     - name: Get envoy workload logs
-      run: kubectl logs --tail 100 -nci-test -ljuju-app=envoy
+      run: kubectl logs --tail 100 -ntesting -ljuju-app=envoy
       if: failure()
 
     - name: Get envoy operator logs
-      run: kubectl logs --tail 100 -nci-test -ljuju-operator=envoy
+      run: kubectl logs --tail 100 -ntesting -ljuju-operator=envoy
       if: failure()
 
     - name: Get mlmd workload logs
-      run: kubectl logs --tail 100 -nci-test -ljuju-app=mlmd
+      run: kubectl logs --tail 100 -ntesting -ljuju-app=mlmd
       if: failure()
 
     - name: Get mlmd operator logs
-      run: kubectl logs --tail 100 -nci-test -ljuju-operator=mlmd
+      run: kubectl logs --tail 100 -ntesting -ljuju-operator=mlmd
+      if: failure()
+
+    - name: Get istio-pilot workload logs
+      run: kubectl logs --tail 100 -ntesting -ljuju-app=istio-pilot
+      if: failure()
+
+    - name: Get istio-pilot operator logs
+      run: kubectl logs --tail 100 -ntesting -ljuju-operator=istio-pilot
       if: failure()
 
     - name: Collect charm debug artifacts

@@ -5,9 +5,14 @@ import json
 import logging
 from pathlib import Path
 
+import aiohttp
 import pytest
 import requests
+import tenacity
 import yaml
+from lightkube import Client
+from lightkube.generic_resource import create_namespaced_resource
+from lightkube.resources.core_v1 import Service
 
 log = logging.getLogger(__name__)
 
@@ -20,6 +25,14 @@ PROMETHEUS = "prometheus-k8s"
 GRAFANA = "grafana-k8s"
 PROMETHEUS_SCRAPE = "prometheus-scrape-config-k8s"
 MLMD = "mlmd"
+ISTIO_PILOT = "istio-pilot"
+ISTIO_GW = "istio-ingressgateway"
+
+
+@pytest.fixture(scope="session")
+def lightkube_client() -> Client:
+    client = Client(field_manager=APP_NAME)
+    return client
 
 
 @pytest.mark.abort_on_fail
@@ -30,11 +43,53 @@ async def test_build_and_deploy(ops_test):
     resources = {"oci-image": image_path}
     await ops_test.model.deploy(charm, resources=resources)
     await ops_test.model.add_relation(APP_NAME, MLMD)
-    await ops_test.model.wait_for_idle(status="active", raise_on_blocked=True, idle_period=30)
+    await ops_test.model.wait_for_idle(
+        apps=[MLMD], status="active", raise_on_blocked=False, idle_period=30
+    )
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME], status="blocked", raise_on_blocked=False, idle_period=30
+    )
 
     relation = ops_test.model.relations[0]
     assert [app.entity_id for app in relation.applications] == [APP_NAME, MLMD]
     assert all([endpoint.name == "grpc" for endpoint in relation.endpoints])
+
+
+@pytest.mark.abort_on_fail
+async def test_virtual_service(ops_test, lightkube_client):
+    await ops_test.model.deploy(
+        ISTIO_PILOT,
+        channel="latest/edge",
+        config={"default-gateway": "kubeflow-gateway"},
+        trust=True,
+    )
+
+    await ops_test.model.deploy(
+        "istio-gateway",
+        application_name=ISTIO_GW,
+        channel="latest/edge",
+        config={"kind": "ingress"},
+        trust=True,
+    )
+    await ops_test.model.add_relation(f"{ISTIO_PILOT}:{ISTIO_PILOT}", f"{ISTIO_GW}:{ISTIO_PILOT}")
+    await ops_test.model.add_relation(ISTIO_PILOT, APP_NAME)
+
+    await ops_test.model.wait_for_idle(
+        status="active",
+        raise_on_blocked=False,
+        raise_on_error=True,
+        timeout=300,
+    )
+
+    # Verify that virtualService is as expected
+    assert_virtualservice_exists(
+        name=APP_NAME, namespace=ops_test.model.name, lightkube_client=lightkube_client
+    )
+
+    # Verify `/ml_metadata` endpoint is served
+    await assert_metadata_endpoint_is_served(ops_test, lightkube_client=lightkube_client)
+
+    await assert_grpc_web_protocol_responds(ops_test, lightkube_client=lightkube_client)
 
 
 @pytest.mark.abort_on_fail
@@ -74,3 +129,70 @@ async def test_correct_observability_setup(ops_test):
     assert response_metric["juju_charm"] == APP_NAME
     assert response_metric["juju_model"] == ops_test.model_name
     assert response_metric["juju_unit"] == f"{APP_NAME}/0"
+
+
+def assert_virtualservice_exists(name: str, namespace: str, lightkube_client):
+    """Will raise a ApiError(404) if the virtualservice does not exist."""
+    log.info(f"Asserting that  VirtualService '{name}' exists.")
+    virtual_service_lightkube_resource = create_namespaced_resource(
+        group="networking.istio.io",
+        version="v1alpha3",
+        kind="VirtualService",
+        plural="virtualservices",
+    )
+    lightkube_client.get(virtual_service_lightkube_resource, name, namespace=namespace)
+    log.info(f"VirtualService '{name}' exists.")
+
+
+@tenacity.retry(
+    stop=tenacity.stop_after_delay(10),
+    wait=tenacity.wait_fixed(2),
+    reraise=True,
+)
+async def assert_metadata_endpoint_is_served(ops_test, lightkube_client):
+    regular_ingress_gateway_ip = await get_gateway_ip(
+        namespace=ops_test.model.name, lightkube_client=lightkube_client
+    )
+    res_status, res_text = await fetch_response(f"http://{regular_ingress_gateway_ip}/ml_metadata")
+    assert res_status != 404
+    log.info("Endpoint /ml_metadata is reachable.")
+
+
+@tenacity.retry(
+    stop=tenacity.stop_after_delay(10),
+    wait=tenacity.wait_fixed(2),
+    reraise=True,
+)
+async def assert_grpc_web_protocol_responds(ops_test, lightkube_client):
+    regular_ingress_gateway_ip = await get_gateway_ip(
+        namespace=ops_test.model.name, lightkube_client=lightkube_client
+    )
+    headers = {"Content-Type": "application/grpc-web-text"}
+    res_status, res_headers = await fetch_response(
+        f"http://{regular_ingress_gateway_ip}/ml_metadata", headers
+    )
+    assert res_status == 200
+    log.info("Endpoint /ml_metadata serves grpc-web protocol.")
+
+
+async def fetch_response(url, headers=None):
+    """Fetch provided URL and return pair - status and text (int, string)."""
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            result_status = response.status
+            result_text = await response.text()
+            result_headers = response.headers
+    if headers is None:
+        return result_status, str(result_text)
+    else:
+        return result_status, result_headers
+
+
+async def get_gateway_ip(
+    namespace: str, lightkube_client, service_name: str = "istio-ingressgateway-workload"
+):
+    log.info(f"Getting {service_name} ingress ip")
+    service = lightkube_client.get(Service, service_name, namespace=namespace)
+    gateway_ip = service.status.loadBalancer.ingress[0].ip
+    return gateway_ip
