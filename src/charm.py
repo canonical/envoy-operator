@@ -297,7 +297,7 @@ class Operator(CharmBase):
             )
         else:
             raise CheckFailed(
-                "No 'ingress' relation available, please relate to a VirtualServices provider e.g. istio-pilot.",  # noqa E501
+                "Please relate to istio-pilot, no ingress relation available.",
                 BlockedStatus,
             )
 
