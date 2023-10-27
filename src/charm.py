@@ -26,7 +26,9 @@ def get_cluster(service: str, port: int):
         name=service,
         connect_timeout=timedelta(seconds=30),
         type=api.ClusterDiscoveryType.LOGICAL_DNS,
-        http2_protocol_options=api.core.Http2ProtocolOptions(),
+        http2_protocol_options=api.core.Http2ProtocolOptions(
+            stream_error_on_invalid_http_messaging=False
+        ),
         lb_policy=api.ClusterLbPolicy.ROUND_ROBIN,
         hosts=[
             api.core.Address(
@@ -70,7 +72,7 @@ def get_listener(cluster: str, port: int):
                 match=api.route.RouteMatch(prefix="/"),
                 route=api.route.RouteAction(
                     cluster=cluster,
-                    max_grpc_timeout=timedelta(seconds=0),
+                    max_grpc_timeout=timedelta(seconds=60),
                 ),
             )
         ],
@@ -100,7 +102,7 @@ def get_listener(cluster: str, port: int):
         ),
     )
     return api.Listener(
-        name="listener-0",
+        name="listener_0",
         address=api.core.Address(
             socket_address=api.core.SocketAddress(
                 address="0.0.0.0",
