@@ -26,7 +26,9 @@ def get_cluster(service: str, port: int):
         name=service,
         connect_timeout=timedelta(seconds=30),
         type=api.ClusterDiscoveryType.LOGICAL_DNS,
-        http2_protocol_options=api.core.Http2ProtocolOptions(stream_error_on_invalid_http_messaging=False),
+        http2_protocol_options=api.core.Http2ProtocolOptions(
+            stream_error_on_invalid_http_messaging=False
+        ),
         lb_policy=api.ClusterLbPolicy.ROUND_ROBIN,
         hosts=[
             api.core.Address(

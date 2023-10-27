@@ -14,6 +14,7 @@ static_resources:
     - socket_address:
         address: grpc-one
         port_value: 8080
+    http2_protocol_options: {}
     name: grpc-one
     type: LOGICAL_DNS
   - connect_timeout: 30.000s
@@ -21,6 +22,7 @@ static_resources:
     - socket_address:
         address: grpc-two
         port_value: 9090
+    http2_protocol_options: {}
     name: grpc-two
     type: LOGICAL_DNS
   listeners:
@@ -53,9 +55,10 @@ static_resources:
                   prefix: /
                 route:
                   cluster: grpc-one
+                  max_grpc_timeout: '60.000s'
           stat_prefix: ingress_http
         name: envoy.http_connection_manager
-    name: listener-0
+    name: listener_0
   - address:
       socket_address:
         address: 0.0.0.0
@@ -85,6 +88,7 @@ static_resources:
                   prefix: /
                 route:
                   cluster: grpc-two
+                  max_grpc_timeout: '60.000s'
           stat_prefix: ingress_http
         name: envoy.http_connection_manager
-    name: listener-0
+    name: listener_0
