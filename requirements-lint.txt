@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements-lint.in
 #
-black==23.9.1
+black==24.3.0
     # via -r requirements-fmt.txt
 click==8.1.7
     # via
@@ -22,7 +22,7 @@ flake8-builtins==2.2.0
     # via -r requirements-lint.in
 flake8-copyright==0.2.4
     # via -r requirements-lint.in
-isort==5.12.0
+isort==5.13.2
     # via -r requirements-fmt.txt
 mccabe==0.7.0
     # via flake8
@@ -30,17 +30,17 @@ mypy-extensions==1.0.0
     # via
     #   -r requirements-fmt.txt
     #   black
-packaging==23.2
+packaging==24.0
     # via
     #   -r requirements-fmt.txt
     #   black
-pathspec==0.11.2
+pathspec==0.12.1
     # via
     #   -r requirements-fmt.txt
     #   black
 pep8-naming==0.13.3
     # via -r requirements-lint.in
-platformdirs==3.11.0
+platformdirs==4.2.0
     # via
     #   -r requirements-fmt.txt
     #   black
@@ -55,7 +55,7 @@ tomli==2.0.1
     #   -r requirements-fmt.txt
     #   black
     #   pyproject-flake8
-typing-extensions==4.8.0
+typing-extensions==4.10.0
     # via
     #   -r requirements-fmt.txt
     #   black

@@ -12,6 +12,8 @@ certifi==2024.2.2
     # via requests
 charset-normalizer==3.3.2
     # via requests
+cosl==0.0.10
+    # via -r requirements.in
 envoy-data-plane==0.2.5
     # via -r requirements.in
 grpclib==0.4.7
@@ -35,6 +37,7 @@ oci-image==1.0.0
 ops==2.11.0
     # via
     #   -r requirements.in
+    #   cosl
     #   serialized-data-interface
 pkgutil-resolve-name==1.3.10
     # via jsonschema
@@ -44,6 +47,7 @@ python-dateutil==2.9.0.post0
     # via betterproto
 pyyaml==6.0.1
     # via
+    #   cosl
     #   ops
     #   serialized-data-interface
 requests==2.31.0
@@ -54,6 +58,8 @@ six==1.16.0
     # via python-dateutil
 stringcase==1.2.0
     # via -r requirements.in
+typing-extensions==4.10.0
+    # via cosl
 urllib3==2.2.1
     # via requests
 websocket-client==1.7.0
