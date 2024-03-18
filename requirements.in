@@ -1,7 +1,7 @@
 # Copyright 2021 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-envoy_data_plane==0.2.5
+envoy_data_plane==0.7.0
 # if unpinned causes problems with installation resulting in module 'platform' has no attribute 'dist'
 oci-image
 ops
