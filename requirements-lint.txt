@@ -18,7 +18,7 @@ flake8==5.0.4
     #   flake8-builtins
     #   pep8-naming
     #   pyproject-flake8
-flake8-builtins==2.1.0
+flake8-builtins==2.2.0
     # via -r requirements-lint.in
 flake8-copyright==0.2.4
     # via -r requirements-lint.in
