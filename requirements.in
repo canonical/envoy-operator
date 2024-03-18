@@ -1,9 +1,10 @@
 # Copyright 2021 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-envoy_data_plane==0.2.5
+charmed-kubeflow-chisme >= 0.2.0
 # from observability_libs.v0.juju_topology.py
 cosl
+envoy_data_plane==0.2.5
 # if unpinned causes problems with installation resulting in module 'platform' has no attribute 'dist'
 oci-image
 ops
