@@ -2,6 +2,8 @@
 # See LICENSE file for licensing details.
 
 envoy_data_plane==0.2.5
+# from observability_libs.v0.juju_topology.py
+cosl
 # if unpinned causes problems with installation resulting in module 'platform' has no attribute 'dist'
 oci-image
 ops
