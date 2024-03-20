@@ -46,9 +46,10 @@ async def test_build_and_deploy(ops_test):
     await ops_test.model.wait_for_idle(
         apps=[MLMD], status="active", raise_on_blocked=False, idle_period=30
     )
-    await ops_test.model.wait_for_idle(
-        apps=[APP_NAME], status="blocked", raise_on_blocked=False, idle_period=30
-    )
+    # TODO: Restore this if we decide Ingress is a required relation for the charm
+    # await ops_test.model.wait_for_idle(
+    #     apps=[APP_NAME], status="blocked", raise_on_blocked=False, idle_period=30
+    # )
 
     relation = ops_test.model.relations[0]
     assert [app.entity_id for app in relation.applications] == [APP_NAME, MLMD]
@@ -150,6 +151,10 @@ def assert_virtualservice_exists(name: str, namespace: str, lightkube_client):
     reraise=True,
 )
 async def assert_metadata_endpoint_is_served(ops_test, lightkube_client):
+    """Asserts that the /ml_metadata endpoint is served (does not return a 404).
+
+    This does not have to return 200.
+    """
     regular_ingress_gateway_ip = await get_gateway_ip(
         namespace=ops_test.model.name, lightkube_client=lightkube_client
     )
@@ -164,9 +169,11 @@ async def assert_metadata_endpoint_is_served(ops_test, lightkube_client):
     reraise=True,
 )
 async def assert_grpc_web_protocol_responds(ops_test, lightkube_client):
+    """Asserts that the /ml_metadata endpoint responds 200 to the grpc-web protocol."""
     regular_ingress_gateway_ip = await get_gateway_ip(
         namespace=ops_test.model.name, lightkube_client=lightkube_client
     )
+    log.info("regular_ingress_gateway_ip: %s", regular_ingress_gateway_ip)
     headers = {"Content-Type": "application/grpc-web-text"}
     res_status, res_headers = await fetch_response(
         f"http://{regular_ingress_gateway_ip}/ml_metadata", headers

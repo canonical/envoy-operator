@@ -50,7 +50,7 @@ cffi==1.16.0
     # via
     #   cryptography
     #   pynacl
-charmed-kubeflow-chisme==0.2.1
+charmed-kubeflow-chisme==0.3.0
     # via -r requirements.txt
 charset-normalizer==3.3.2
     # via
@@ -85,7 +85,7 @@ frozenlist==1.4.1
     # via
     #   aiohttp
     #   aiosignal
-google-auth==2.28.2
+google-auth==2.29.0
     # via kubernetes
 grpclib==0.4.7
     # via
@@ -128,7 +128,7 @@ idna==3.6
     #   requests
     #   trio
     #   yarl
-importlib-resources==6.3.1
+importlib-resources==6.3.2
     # via
     #   -r requirements.txt
     #   jsonschema
@@ -334,8 +334,6 @@ sortedcontainers==2.4.0
     # via trio
 stack-data==0.6.3
     # via ipython
-stringcase==1.2.0
-    # via -r requirements.txt
 tenacity==8.2.3
     # via
     #   -r requirements-integration.in
@@ -351,7 +349,7 @@ traitlets==5.14.2
     # via
     #   ipython
     #   matplotlib-inline
-trio==0.24.0
+trio==0.25.0
     # via
     #   selenium
     #   trio-websocket
