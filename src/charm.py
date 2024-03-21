@@ -102,9 +102,7 @@ class EnvoyOperator(CharmBase):
 
         admin_port = ServicePort(int(self.model.config["admin-port"]), name="admin")
         http_port = ServicePort(int(self.model.config["http-port"]), name="http")
-        self.service_patcher = KubernetesServicePatch(
-            self, [admin_port, http_port], service_name=f"{self.model.app.name}"
-        )
+        self.service_patcher = KubernetesServicePatch(self, [admin_port, http_port])
 
         self.prometheus_provider = MetricsEndpointProvider(
             charm=self,

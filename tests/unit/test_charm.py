@@ -19,7 +19,7 @@ def harness(mocked_kubernetes_service_patch):
 def mocked_kubernetes_service_patch(mocker):
     """Mocks the KubernetesServicePatch for the charm."""
     mocked_kubernetes_service_patch = mocker.patch(
-        "charm.KubernetesServicePatch", lambda x, y, service_name: None
+        "charm.KubernetesServicePatch", lambda x, y: None
     )
     yield mocked_kubernetes_service_patch
 
