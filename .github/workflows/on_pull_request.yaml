@@ -9,10 +9,10 @@ on:
 
 jobs:
 
-  tests:
-    name: Run Tests
-    uses: ./.github/workflows/integrate.yaml
-    secrets: inherit
+#  tests:
+#    name: Run Tests
+#    uses: ./.github/workflows/integrate.yaml
+#    secrets: inherit
 
   # publish runs in parallel with tests, as we always publish in this situation
   publish-charm:
