@@ -31,14 +31,14 @@ class GenerateEnvoyConfig(Component):
 
         This Component does not actually do anything when the Charm refreshes, but instead
         is used to generate a config file given some inputs on demand via the `.get_config()`
-        method.  As a small validation step, we execute our _inputs_getter() here just to
+        method.  As a small validation step, we execute our _get_inputs() here just to
         raise an error if anything is malformed.
         """
-        self._inputs_getter()
+        self._get_inputs()
 
     def get_config(self):
         """Generate envoy configuration."""
-        inputs = self._inputs_getter()
+        inputs = self._get_inputs()
 
         admin = bs.Admin(
             access_log_path="/tmp/admin_access.log",
@@ -74,11 +74,23 @@ class GenerateEnvoyConfig(Component):
         it active if its _inputs_getter() does not fail to execute.
         """
         try:
-            self._inputs_getter()
+            self._get_inputs()
             return ActiveStatus()
-        except Exception as e:
-            logger.error(f"Failed to process inputs.  Got Exception: {e}")
+        except Exception:
             return BlockedStatus("Failed to process inputs.  See logs")
+
+    def _get_inputs(self):
+        """Gets the inputs for this component from inputs_getter, raising if they are invalid."""
+        try:
+            return self._inputs_getter()
+        except Exception as e:
+            # Add an error message to explain this situation then re-raise the exception so it'll
+            # be caught elsewhere
+            logger.error(
+                f"GenerateEnvoyConfig failed to process inputs.  This is likely due to"
+                f" an upstream component providing invalid input.  Got Exception: {e}"
+            )
+            raise e
 
 
 def get_cluster(service: str, port: int):

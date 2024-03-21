@@ -3,6 +3,7 @@
 
 import pytest
 import yaml
+from ops import BlockedStatus
 from ops.model import ActiveStatus
 from ops.testing import Harness
 
@@ -87,6 +88,24 @@ class TestCharm:
         harness.begin_with_initial_hooks()
 
         assert harness.charm.envoy_config_generator.status == ActiveStatus()
+
+    def test_envoy_config_generator_if_grpc_get_data_returns_empty_dict(self, harness):
+        """Test the envoy_config_generator Component raises an error if grpc data is not ready."""
+        harness.set_leader(True)
+        setup_grpc_relation(harness, "grpc-one", "8080")
+        setup_ingress_relation(harness)
+
+        # Let the charm start up with the grpc relation
+        harness.begin_with_initial_hooks()
+
+        # Now mock out the grpc relation's get_data to return an empty dict
+        harness.charm.grpc.component.get_data = lambda: {}
+
+        assert isinstance(harness.charm.envoy_config_generator.status, BlockedStatus)
+
+        # Do something to trigger a config changed to update the charm status
+        harness.update_config({"admin-port": "8082"})
+        assert not isinstance(harness.charm.model.unit.status, ActiveStatus)
 
     def test_pebble_container(self, harness):
         """Test the pebble container is active when prerequisites are ready."""
