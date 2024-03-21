@@ -44,12 +44,8 @@ async def test_build_and_deploy(ops_test):
     await ops_test.model.deploy(charm, resources=resources)
     await ops_test.model.add_relation(APP_NAME, MLMD)
     await ops_test.model.wait_for_idle(
-        apps=[MLMD], status="active", raise_on_blocked=False, idle_period=30
+        apps=[MLMD, APP_NAME], status="active", raise_on_blocked=False, idle_period=30
     )
-    # TODO: Restore this if we decide Ingress is a required relation for the charm
-    # await ops_test.model.wait_for_idle(
-    #     apps=[APP_NAME], status="blocked", raise_on_blocked=False, idle_period=30
-    # )
 
     relation = ops_test.model.relations[0]
     assert [app.entity_id for app in relation.applications] == [APP_NAME, MLMD]
