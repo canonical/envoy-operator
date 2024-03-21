@@ -73,7 +73,6 @@ class EnvoyOperator(CharmBase):
                 inputs_getter=lambda: GenerateEnvoyConfigInputs(
                     admin_port=int(self.config["admin-port"]),
                     http_port=int(self.config["http-port"]),
-                    # TODO: Do these work properly?  They're not deferred
                     upstream_service=self.grpc.component.get_data()["service"],
                     upstream_port=self.grpc.component.get_data()["port"],
                 ),
