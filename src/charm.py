@@ -36,7 +36,8 @@ class EnvoyOperator(CharmBase):
             )
         )
 
-        # TODO: Change this from SDI to the service-info lib
+        # TODO before ckf 1.9: Change this from SDI to the service-info lib
+        #  https://github.com/canonical/envoy-operator/issues/76
         self.grpc = self.charm_reconciler.add(
             component=SdiRelationDataReceiverComponent(
                 charm=self,
