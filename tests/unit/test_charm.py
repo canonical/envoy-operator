@@ -42,6 +42,7 @@ class TestCharm:
             "Expected data from exactly 1 related applications - got 0"
             in harness.charm.grpc.status.message
         )
+        assert isinstance(harness.charm.grpc.status, BlockedStatus)
         assert not isinstance(harness.charm.model.unit.status, ActiveStatus)
 
     def test_many_relations(self, harness):
@@ -58,6 +59,7 @@ class TestCharm:
             "Expected data from at most 1 related applications - got 2"
             in harness.charm.grpc.status.message
         )
+        assert isinstance(harness.charm.grpc.status, BlockedStatus)
         assert not isinstance(harness.charm.model.unit.status, ActiveStatus)
 
     def test_with_grpc_relation(self, harness):
