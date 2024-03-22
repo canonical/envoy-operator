@@ -17,6 +17,7 @@ from ops.charm import CharmBase
 from ops.main import main
 
 from components.config_generation import GenerateEnvoyConfig, GenerateEnvoyConfigInputs
+from components.ingress import IngressRelationWarnIfMissing, IngressRelationWarnIfMissingInputs
 from components.pebble import EnvoyPebbleService, EnvoyPebbleServiceInputs
 
 ENVOY_CONFIG_FILE_PATH = "/envoy/envoy.json"
@@ -66,6 +67,17 @@ class EnvoyOperator(CharmBase):
                 },
             ),
             depends_on=[self.leadership_gate],
+        )
+
+        self.ingress_relation_warn_if_missing = self.charm_reconciler.add(
+            component=IngressRelationWarnIfMissing(
+                charm=self,
+                name="ingress-relation-warn-if-missing",
+                inputs_getter=lambda: IngressRelationWarnIfMissingInputs(
+                    interface=self.ingress_relation.component.get_interface()
+                ),
+            ),
+            depends_on=[self.ingress_relation],
         )
 
         self.envoy_config_generator = self.charm_reconciler.add(

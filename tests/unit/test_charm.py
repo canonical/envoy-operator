@@ -81,6 +81,41 @@ class TestCharm:
 
         assert harness.charm.ingress_relation.status == ActiveStatus()
 
+    def test_warning_if_ingress_missing(self, harness, mocker):
+        """Test that we emit a warning if we do not have an ingress established."""
+        harness.set_leader(True)
+        setup_grpc_relation(harness, "grpc-one", "8080")
+
+        harness.begin()
+
+        # Mock the ingress warning logger so we can check if it was called
+        mock_logger = mocker.MagicMock()
+        harness.charm.ingress_relation_warn_if_missing.component.logger = mock_logger
+
+        # Do something that will reconcile the charm
+        harness.charm.on.config_changed.emit()
+
+        # Assert that we've logged the missing ingress relation
+        assert "No ingress relation established" in mock_logger.warning.call_args[0][0]
+
+    def test_no_warning_if_ingress_is_established(self, harness, mocker):
+        """Test that we emit a warning if we do not have an ingress established."""
+        harness.set_leader(True)
+        setup_grpc_relation(harness, "grpc-one", "8080")
+        setup_ingress_relation(harness)
+
+        harness.begin()
+
+        # Mock the ingress warning logger so we can check if it was called
+        mock_logger = mocker.MagicMock()
+        harness.charm.ingress_relation_warn_if_missing.component.logger = mock_logger
+
+        # Do something that will reconcile the charm
+        harness.charm.on.config_changed.emit()
+
+        # Assert that we haven't logged anything
+        assert mock_logger.warning.call_args is None
+
     def test_envoy_config_generator(self, harness):
         """Test the envoy_config_generator Component is active when prerequisites are ready."""
         harness.set_leader(True)
