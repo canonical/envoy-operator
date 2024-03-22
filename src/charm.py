@@ -47,10 +47,12 @@ class EnvoyOperator(CharmBase):
             depends_on=[self.leadership_gate],
         )
 
-        # Should this Component block the charm if it is not available?
-        # It is a requirement of the Kubeflow bundle, not the envoy charm.
-        # Envoy doesn't  NEED this relation, but Charmed Kubeflow using this for
-        # kfp does need that relation.
+        # Should this Component block the charm if it is not available?  Ingress is a requirement
+        # of this charm deployed in the Kubeflow bundle not of Envoy itself (see
+        # https://github.com/canonical/envoy-operator/issues/61 for more details).
+        # The Envoy workload deployed here doesn't NEED this relation to function, but since this
+        # charm is designed specifically to implement Envoy for KFP's metadata handling,
+        # ingress is needed by KFP in Charmed Kubeflow.
         self.ingress_relation = self.charm_reconciler.add(
             component=SdiRelationBroadcasterComponent(
                 charm=self,
