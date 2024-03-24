@@ -88,7 +88,7 @@ pytest==8.1.1
     #   pytest-mock
 pytest-lazy-fixture==0.6.3
     # via -r requirements-unit.in
-pytest-mock==3.12.0
+pytest-mock==3.14.0
     # via -r requirements-unit.in
 python-dateutil==2.9.0.post0
     # via
