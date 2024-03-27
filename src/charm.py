@@ -144,7 +144,7 @@ class Operator(CharmBase):
 
         self.dashboard_provider = GrafanaDashboardProvider(
             self,
-            relation_name="grafana-dashboards",
+            relation_name="grafana-dashboard",
         )
 
         for event in [
