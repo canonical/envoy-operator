@@ -1,76 +1,73 @@
-# Copyright 2021 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 import json
 import logging
-from pathlib import Path
 
 import aiohttp
 import pytest
 import requests
 import tenacity
-import yaml
 from lightkube import Client
 from lightkube.generic_resource import create_namespaced_resource
 from lightkube.resources.core_v1 import Service
 
+from . import constants
+
 log = logging.getLogger(__name__)
-
-
-METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
-
-APP_NAME = "envoy"
-CHARM_ROOT = "."
-PROMETHEUS = "prometheus-k8s"
-GRAFANA = "grafana-k8s"
-PROMETHEUS_SCRAPE = "prometheus-scrape-config-k8s"
-MLMD = "mlmd"
-ISTIO_PILOT = "istio-pilot"
-ISTIO_GW = "istio-ingressgateway"
 
 
 @pytest.fixture(scope="session")
 def lightkube_client() -> Client:
-    client = Client(field_manager=APP_NAME)
+    client = Client(field_manager=constants.ENVOY_APP_NAME)
     return client
 
 
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test):
-    await ops_test.model.deploy(MLMD, channel="latest/edge")
-    charm = await ops_test.build_charm(".")
-    image_path = METADATA["resources"]["oci-image"]["upstream-source"]
+    await ops_test.model.deploy(
+        constants.MLMD, channel=constants.MLMD_CHANNEL, trust=constants.MLMD_TRUST
+    )
+    charm = await ops_test.build_charm(constants.CHARM_ROOT)
+    image_path = constants.METADATA["resources"]["oci-image"]["upstream-source"]
     resources = {"oci-image": image_path}
     await ops_test.model.deploy(charm, resources=resources)
-    await ops_test.model.add_relation(APP_NAME, MLMD)
+    await ops_test.model.add_relation(constants.ENVOY_APP_NAME, constants.MLMD)
     await ops_test.model.wait_for_idle(
-        apps=[MLMD, APP_NAME], status="active", raise_on_blocked=False, idle_period=30
+        apps=[constants.MLMD], status="active", raise_on_blocked=False, idle_period=30
+    )
+    await ops_test.model.wait_for_idle(
+        apps=[constants.ENVOY_APP_NAME], status="blocked", raise_on_blocked=False, idle_period=30
     )
 
     relation = ops_test.model.relations[0]
-    assert [app.entity_id for app in relation.applications] == [APP_NAME, MLMD]
+    assert [app.entity_id for app in relation.applications] == [
+        constants.ENVOY_APP_NAME,
+        constants.MLMD,
+    ]
     assert all([endpoint.name == "grpc" for endpoint in relation.endpoints])
 
 
 @pytest.mark.abort_on_fail
 async def test_virtual_service(ops_test, lightkube_client):
     await ops_test.model.deploy(
-        ISTIO_PILOT,
-        channel="latest/edge",
-        config={"default-gateway": "kubeflow-gateway"},
-        trust=True,
+        entity_url=constants.ISTIO_PILOT,
+        channel=constants.ISTIO_OPERATORS_CHANNEL,
+        config=constants.ISTIO_PILOT_CONFIG,
+        trust=constants.ISTIO_PILOT_TRUE,
     )
 
     await ops_test.model.deploy(
-        "istio-gateway",
-        application_name=ISTIO_GW,
-        channel="latest/edge",
-        config={"kind": "ingress"},
-        trust=True,
+        entity_url=constants.ISTIO_GATEWAY,
+        application_name=constants.ISTIO_GATEWAY_APP_NAME,
+        channel=constants.ISTIO_OPERATORS_CHANNEL,
+        config=constants.ISTIO_GATEWAY_CONFIG,
+        trust=constants.ISTIO_GATEWAY_TRUST,
     )
-    await ops_test.model.add_relation(f"{ISTIO_PILOT}:{ISTIO_PILOT}", f"{ISTIO_GW}:{ISTIO_PILOT}")
-    await ops_test.model.add_relation(ISTIO_PILOT, APP_NAME)
-
+    await ops_test.model.add_relation(
+        constants.ISTIO_PILOT,
+        constants.ISTIO_GATEWAY_APP_NAME,
+    )
     await ops_test.model.wait_for_idle(
         status="active",
         raise_on_blocked=False,
@@ -80,7 +77,9 @@ async def test_virtual_service(ops_test, lightkube_client):
 
     # Verify that virtualService is as expected
     assert_virtualservice_exists(
-        name=APP_NAME, namespace=ops_test.model.name, lightkube_client=lightkube_client
+        name=constants.ENVOY_APP_NAME,
+        namespace=ops_test.model.name,
+        lightkube_client=lightkube_client,
     )
 
     # Verify `/ml_metadata` endpoint is served
@@ -91,41 +90,62 @@ async def test_virtual_service(ops_test, lightkube_client):
 
 @pytest.mark.abort_on_fail
 async def test_deploy_with_prometheus_and_grafana(ops_test):
-    scrape_config = {"scrape_interval": "30s"}
-    await ops_test.model.deploy(PROMETHEUS, channel="latest/stable", trust=True)
-    await ops_test.model.deploy(GRAFANA, channel="latest/stable", trust=True)
+    # Deploy and relate prometheus
     await ops_test.model.deploy(
-        PROMETHEUS_SCRAPE, channel="latest/stable", trust=True, config=scrape_config
+        constants.PROMETHEUS_K8S,
+        channel=constants.PROMETHEUS_K8S_CHANNEL,
+        trust=constants.PROMETHEUS_K8S_TRUST,
     )
-    await ops_test.model.add_relation(APP_NAME, PROMETHEUS_SCRAPE)
+    await ops_test.model.deploy(
+        constants.GRAFANA_K8S,
+        channel=constants.GRAFANA_K8S_CHANNEL,
+        trust=constants.GRAFANA_K8S_TRUST,
+    )
+    await ops_test.model.deploy(
+        constants.PROMETHEUS_SCRAPE_K8S,
+        channel=constants.PROMETHEUS_SCRAPE_K8S_CHANNEL,
+        config=constants.PROMETHEUS_SCRAPE_CONFIG,
+    )
+
     await ops_test.model.add_relation(
-        f"{PROMETHEUS}:metrics-endpoint", f"{PROMETHEUS_SCRAPE}:metrics-endpoint"
+        f"{constants.PROMETHEUS_K8S}:grafana-dashboard",
+        f"{constants.GRAFANA_K8S}:grafana-dashboard",
     )
     await ops_test.model.add_relation(
-        f"{PROMETHEUS}:grafana-dashboard", f"{GRAFANA}:grafana-dashboard"
+        f"{constants.PROMETHEUS_K8S}:metrics-endpoint",
+        f"{constants.PROMETHEUS_SCRAPE_K8S}:metrics-endpoint",
     )
-    await ops_test.model.add_relation(APP_NAME, GRAFANA)
-    await ops_test.model.add_relation(PROMETHEUS, APP_NAME)
+
+    await ops_test.model.add_relation(constants.ENVOY_APP_NAME, constants.GRAFANA_K8S)
+    await ops_test.model.add_relation(constants.PROMETHEUS_K8S, constants.ENVOY_APP_NAME)
 
     await ops_test.model.wait_for_idle(
-        [APP_NAME, PROMETHEUS, GRAFANA, PROMETHEUS_SCRAPE], status="active"
+        [
+            constants.ENVOY_APP_NAME,
+            constants.PROMETHEUS_K8S,
+            constants.GRAFANA_K8S,
+            constants.PROMETHEUS_SCRAPE_K8S,
+        ],
+        status="active",
     )
 
 
 async def test_correct_observability_setup(ops_test):
     status = await ops_test.model.get_status()
-    prometheus_unit_ip = status["applications"][PROMETHEUS]["units"][f"{PROMETHEUS}/0"]["address"]
+    prometheus_unit_ip = status["applications"][constants.PROMETHEUS_K8S]["units"][
+        f"{constants.PROMETHEUS_K8S}/0"
+    ]["address"]
     r = requests.get(
-        f'http://{prometheus_unit_ip}:9090/api/v1/query?query=up{{juju_application="{APP_NAME}"}}'
+        f'http://{prometheus_unit_ip}:9090/api/v1/query?query=up{{juju_application="{constants.ENVOY_APP_NAME}"}}'  # noqa
     )
     response = json.loads(r.content.decode("utf-8"))
     assert response["status"] == "success"
 
     response_metric = response["data"]["result"][0]["metric"]
-    assert response_metric["juju_application"] == APP_NAME
-    assert response_metric["juju_charm"] == APP_NAME
+    assert response_metric["juju_application"] == constants.ENVOY_APP_NAME
+    assert response_metric["juju_charm"] == constants.ENVOY_APP_NAME
     assert response_metric["juju_model"] == ops_test.model_name
-    assert response_metric["juju_unit"] == f"{APP_NAME}/0"
+    assert response_metric["juju_unit"] == f"{constants.ENVOY_APP_NAME}/0"
 
 
 def assert_virtualservice_exists(name: str, namespace: str, lightkube_client):
@@ -151,6 +171,7 @@ async def assert_metadata_endpoint_is_served(ops_test, lightkube_client):
 
     This does not have to return 200.
     """
+
     regular_ingress_gateway_ip = await get_gateway_ip(
         namespace=ops_test.model.name, lightkube_client=lightkube_client
     )
