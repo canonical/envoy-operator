@@ -56,7 +56,6 @@ async def test_virtual_service(ops_test, lightkube_client):
         config=constants.ISTIO_PILOT_CONFIG,
         trust=constants.ISTIO_PILOT_TRUST,
     )
-
     await ops_test.model.deploy(
         entity_url=constants.ISTIO_GATEWAY,
         application_name=constants.ISTIO_GATEWAY_APP_NAME,
@@ -64,10 +63,13 @@ async def test_virtual_service(ops_test, lightkube_client):
         config=constants.ISTIO_GATEWAY_CONFIG,
         trust=constants.ISTIO_GATEWAY_TRUST,
     )
+
     await ops_test.model.add_relation(
         constants.ISTIO_PILOT,
         constants.ISTIO_GATEWAY_APP_NAME,
     )
+    await ops_test.model.add_relation(constants.ISTIO_PILOT, constants.ENVOY_APP_NAME)
+
     await ops_test.model.wait_for_idle(
         status="active",
         raise_on_blocked=False,
