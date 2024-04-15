@@ -141,6 +141,7 @@ async def test_deploy_with_prometheus_and_grafana(ops_test):
 
     await ops_test.model.add_relation(ENVOY_APP_NAME, GRAFANA_K8S)
     await ops_test.model.add_relation(PROMETHEUS_K8S, ENVOY_APP_NAME)
+    await ops_test.model.add_relation(PROMETHEUS_SCRAPE_K8S, ENVOY_APP_NAME)
 
     await ops_test.model.wait_for_idle(
         [
