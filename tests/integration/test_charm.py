@@ -58,10 +58,7 @@ async def test_build_and_deploy(ops_test):
     await ops_test.model.deploy(charm, resources=resources)
     await ops_test.model.add_relation(ENVOY_APP_NAME, MLMD)
     await ops_test.model.wait_for_idle(
-        apps=[MLMD], status="active", raise_on_blocked=False, idle_period=30
-    )
-    await ops_test.model.wait_for_idle(
-        apps=[ENVOY_APP_NAME], status="blocked", raise_on_blocked=False, idle_period=30
+        apps=[ENVOY_APP_NAME, MLMD], status="active", raise_on_blocked=False, idle_period=30
     )
 
     relation = ops_test.model.relations[0]
