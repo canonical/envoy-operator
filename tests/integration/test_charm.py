@@ -55,7 +55,7 @@ async def test_build_and_deploy(ops_test):
     charm = await ops_test.build_charm(CHARM_ROOT)
     image_path = METADATA["resources"]["oci-image"]["upstream-source"]
     resources = {"oci-image": image_path}
-    await ops_test.model.deploy(charm, resources=resources)
+    await ops_test.model.deploy(charm, resources=resources, trust=True)
     await ops_test.model.add_relation(ENVOY_APP_NAME, MLMD)
     await ops_test.model.wait_for_idle(
         apps=[ENVOY_APP_NAME, MLMD], status="active", raise_on_blocked=False, idle_period=30
