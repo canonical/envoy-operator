@@ -69,7 +69,6 @@ async def test_build_and_deploy(ops_test):
     assert all([endpoint.name in ("grpc", "k8s-service-info") for endpoint in relation.endpoints])
 
 
-
 @pytest.mark.abort_on_fail
 async def test_virtual_service(ops_test, lightkube_client):
     await ops_test.model.deploy(
