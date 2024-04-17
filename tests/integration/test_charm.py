@@ -66,7 +66,8 @@ async def test_build_and_deploy(ops_test):
         ENVOY_APP_NAME,
         MLMD,
     ]
-    assert all([endpoint.name == "grpc" for endpoint in relation.endpoints])
+    assert all([endpoint.name in ("grpc", "k8s-service-info") for endpoint in relation.endpoints])
+
 
 
 @pytest.mark.abort_on_fail
