@@ -20,7 +20,7 @@ ENVOY_APP_NAME = "envoy"
 
 MLMD = "mlmd"
 MLMD_CHANNEL = "latest/edge"
-MLMD_TRUST = False
+MLMD_TRUST = True
 
 ISTIO_OPERATORS_CHANNEL = "latest/edge"
 ISTIO_PILOT = "istio-pilot"

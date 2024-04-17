@@ -1,6 +1,5 @@
 # Copyright 2021 Canonical Ltd.
 # See LICENSE file for licensing details.
-
 charmed-kubeflow-chisme >= 0.3.0
 # from observability_libs.v0.juju_topology.py
 cosl
@@ -10,3 +9,7 @@ cosl
 # if unpinned causes problems with installation resulting in module 'platform' has no attribute 'dist'
 oci-image
 ops
+# This is a dependency of the k8s_service_info lib
+# pydantic greater or equal to 2.7 yields issues with the
+# rustc version available for this ubuntu version
+pydantic==2.6.4
