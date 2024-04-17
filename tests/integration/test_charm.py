@@ -89,7 +89,7 @@ async def test_virtual_service(ops_test, lightkube_client):
         ISTIO_PILOT,
         ISTIO_GATEWAY_APP_NAME,
     )
-    await ops_test.model.add_relation(ISTIO_PILOT, ENVOY_APP_NAME)
+    await ops_test.model.add_relation(f"{ISTIO_PILOT}:ingress, {ENVOY_APP_NAME}:ingress")
 
     await ops_test.model.wait_for_idle(
         status="active",
