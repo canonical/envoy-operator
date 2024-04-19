@@ -1,9 +1,10 @@
 # Copyright 2021 Canonical Ltd.
 # See LICENSE file for licensing details.
+from unittest.mock import MagicMock
 
 import pytest
 from ops import BlockedStatus
-from ops.model import ActiveStatus, TooManyRelatedAppsError
+from ops.model import ActiveStatus, TooManyRelatedAppsError, WaitingStatus
 from ops.testing import Harness
 
 from charm import GRPC_RELATION_NAME, EnvoyOperator
@@ -69,6 +70,42 @@ class TestCharm:
         harness.begin_with_initial_hooks()
 
         assert isinstance(harness.charm.grpc.status, ActiveStatus)
+
+    def test_grpc_with_empty_data(self, harness):
+        """Test the grpc relation component returns WaitingStatus when data is missing."""
+        # Arrange
+        harness.begin()
+
+        # Mock:
+        # * leadership_gate to be active and executed
+        harness.charm.leadership_gate.get_status = MagicMock(return_value=ActiveStatus())
+
+        harness.charm.on.install.emit()
+
+        # Add relation without data.
+        harness.add_relation(relation_name=GRPC_RELATION_NAME, remote_app="other-app", app_data={})
+
+        assert isinstance(harness.charm.grpc.get_status(), WaitingStatus)
+
+    def test_grpc_relation_with_missing_data(self, harness):
+        """Test the grpc relation component returns WaitingStatus when data is incomplete."""
+        # Arrange
+        harness.begin()
+
+        # Mock:
+        # * leadership_gate to be active and executed
+        harness.charm.leadership_gate.get_status = MagicMock(return_value=ActiveStatus())
+
+        harness.charm.on.install.emit()
+
+        # Add relation without data.
+        harness.add_relation(
+            relation_name=GRPC_RELATION_NAME,
+            remote_app="other-app",
+            app_data={"name": "some-name"},
+        )
+
+        assert isinstance(harness.charm.grpc.component.get_status(), WaitingStatus)
 
     def test_with_ingress_relation(self, harness):
         """Test that the ingress_relation Component is active when an ingress is present."""

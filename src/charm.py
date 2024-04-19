@@ -17,7 +17,7 @@ from ops.main import main
 
 from components.config_generation import GenerateEnvoyConfig, GenerateEnvoyConfigInputs
 from components.ingress import IngressRelationWarnIfMissing, IngressRelationWarnIfMissingInputs
-from components.k8s_service_info_component import K8sServiceInfoComponent
+from components.k8s_service_info_requirer_component import K8sServiceInfoRequirerComponent
 from components.pebble import EnvoyPebbleService, EnvoyPebbleServiceInputs
 
 ENVOY_CONFIG_FILE_PATH = "/envoy/envoy.json"
@@ -39,7 +39,7 @@ class EnvoyOperator(CharmBase):
         )
 
         self.grpc = self.charm_reconciler.add(
-            component=K8sServiceInfoComponent(
+            component=K8sServiceInfoRequirerComponent(
                 charm=self,
                 relation_name=GRPC_RELATION_NAME,
             ),
