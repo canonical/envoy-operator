@@ -20,7 +20,7 @@ ENVOY_APP_NAME = "envoy"
 
 MLMD = "mlmd"
 MLMD_CHANNEL = "latest/edge"
-MLMD_TRUST = False
+MLMD_TRUST = True
 
 ISTIO_OPERATORS_CHANNEL = "latest/edge"
 ISTIO_PILOT = "istio-pilot"
@@ -66,7 +66,7 @@ async def test_build_and_deploy(ops_test):
         ENVOY_APP_NAME,
         MLMD,
     ]
-    assert all([endpoint.name == "grpc" for endpoint in relation.endpoints])
+    assert all([endpoint.name in ("grpc", "k8s-service-info") for endpoint in relation.endpoints])
 
 
 @pytest.mark.abort_on_fail
@@ -89,7 +89,7 @@ async def test_virtual_service(ops_test, lightkube_client):
         ISTIO_PILOT,
         ISTIO_GATEWAY_APP_NAME,
     )
-    await ops_test.model.add_relation(ISTIO_PILOT, ENVOY_APP_NAME)
+    await ops_test.model.add_relation(f"{ISTIO_PILOT}:ingress", f"{ENVOY_APP_NAME}:ingress")
 
     await ops_test.model.wait_for_idle(
         status="active",

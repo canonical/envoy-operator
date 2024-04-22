@@ -6,7 +6,6 @@ from charmed_kubeflow_chisme.components import (
     CharmReconciler,
     LeadershipGateComponent,
     SdiRelationBroadcasterComponent,
-    SdiRelationDataReceiverComponent,
 )
 from charmed_kubeflow_chisme.components.pebble_component import LazyContainerFileTemplate
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
@@ -18,9 +17,11 @@ from ops.main import main
 
 from components.config_generation import GenerateEnvoyConfig, GenerateEnvoyConfigInputs
 from components.ingress import IngressRelationWarnIfMissing, IngressRelationWarnIfMissingInputs
+from components.k8s_service_info_requirer_component import K8sServiceInfoRequirerComponent
 from components.pebble import EnvoyPebbleService, EnvoyPebbleServiceInputs
 
 ENVOY_CONFIG_FILE_PATH = "/envoy/envoy.json"
+GRPC_RELATION_NAME = "grpc"
 METRICS_PATH = "/stats/prometheus"
 
 
@@ -37,13 +38,10 @@ class EnvoyOperator(CharmBase):
             )
         )
 
-        # TODO before ckf 1.9: Change this from SDI to the service-info lib
-        #  https://github.com/canonical/envoy-operator/issues/76
         self.grpc = self.charm_reconciler.add(
-            component=SdiRelationDataReceiverComponent(
+            component=K8sServiceInfoRequirerComponent(
                 charm=self,
-                name="relation:grpc",
-                relation_name="grpc",
+                relation_name=GRPC_RELATION_NAME,
             ),
             depends_on=[self.leadership_gate],
         )
@@ -87,8 +85,8 @@ class EnvoyOperator(CharmBase):
                 inputs_getter=lambda: GenerateEnvoyConfigInputs(
                     admin_port=int(self.config["admin-port"]),
                     http_port=int(self.config["http-port"]),
-                    upstream_service=self.grpc.component.get_data()["service"],
-                    upstream_port=self.grpc.component.get_data()["port"],
+                    upstream_service=self.grpc.component.get_service_info().name,
+                    upstream_port=self.grpc.component.get_service_info().port,
                 ),
             ),
             depends_on=[self.grpc],

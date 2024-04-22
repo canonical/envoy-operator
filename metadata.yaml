@@ -19,9 +19,7 @@ provides:
     interface: grafana_dashboard
 requires:
   grpc:
-    interface: grpc
-    schema: https://raw.githubusercontent.com/canonical/operator-schemas/master/grpc.yaml
-    versions: [v1]
+    interface: k8s-service
   ingress:
     interface: ingress
     schema:
