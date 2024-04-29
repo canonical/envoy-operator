@@ -4,7 +4,7 @@ charmed-kubeflow-chisme >= 0.3.0
 # from observability_libs.v0.juju_topology.py
 cosl
 envoy_data_plane==0.2.5
-# from observability_libs.v0.juju_topology.py
+# from prometheus_k8s/v0/prometheus_scrape.py lib
 cosl
 # if unpinned causes problems with installation resulting in module 'platform' has no attribute 'dist'
 oci-image
