@@ -1,13 +1,15 @@
 # Copyright 2021 Canonical Ltd.
 # See LICENSE file for licensing details.
+from unittest.mock import MagicMock
 
 import pytest
-import yaml
 from ops import BlockedStatus
-from ops.model import ActiveStatus
+from ops.model import ActiveStatus, TooManyRelatedAppsError, WaitingStatus
 from ops.testing import Harness
 
-from charm import EnvoyOperator
+from charm import GRPC_RELATION_NAME, EnvoyOperator
+
+MOCK_GRPC_DATA = {"name": "service-name", "port": "1234"}
 
 
 @pytest.fixture
@@ -26,7 +28,6 @@ def mocked_kubernetes_service_patch(mocker):
 
 
 class TestCharm:
-
     def test_not_leader(self, harness):
         """Test that the charm is not active when not leader."""
         harness.begin_with_initial_hooks()
@@ -39,7 +40,7 @@ class TestCharm:
         harness.begin_with_initial_hooks()
 
         assert (
-            "Expected data from exactly 1 related applications - got 0"
+            "Missing relation with a k8s service info provider. Please add the missing relation."
             in harness.charm.grpc.status.message
         )
         assert isinstance(harness.charm.grpc.status, BlockedStatus)
@@ -53,13 +54,13 @@ class TestCharm:
         setup_grpc_relation(harness, "grpc-two", "9090")
         # In order to avoid the charm going to Blocked
         setup_ingress_relation(harness)
+
         harness.begin_with_initial_hooks()
 
-        assert (
-            "Expected data from at most 1 related applications - got 2"
-            in harness.charm.grpc.status.message
-        )
-        assert isinstance(harness.charm.grpc.status, BlockedStatus)
+        with pytest.raises(TooManyRelatedAppsError) as error:
+            harness.charm.grpc.get_status()
+
+        assert "Too many remote applications on grpc (2 > 1)" in error.value.args
         assert not isinstance(harness.charm.model.unit.status, ActiveStatus)
 
     def test_with_grpc_relation(self, harness):
@@ -69,6 +70,42 @@ class TestCharm:
         harness.begin_with_initial_hooks()
 
         assert isinstance(harness.charm.grpc.status, ActiveStatus)
+
+    def test_grpc_with_empty_data(self, harness):
+        """Test the grpc relation component returns WaitingStatus when data is missing."""
+        # Arrange
+        harness.begin()
+
+        # Mock:
+        # * leadership_gate to be active and executed
+        harness.charm.leadership_gate.get_status = MagicMock(return_value=ActiveStatus())
+
+        harness.charm.on.install.emit()
+
+        # Add relation without data.
+        harness.add_relation(relation_name=GRPC_RELATION_NAME, remote_app="other-app", app_data={})
+
+        assert isinstance(harness.charm.grpc.get_status(), WaitingStatus)
+
+    def test_grpc_relation_with_missing_data(self, harness):
+        """Test the grpc relation component returns WaitingStatus when data is incomplete."""
+        # Arrange
+        harness.begin()
+
+        # Mock:
+        # * leadership_gate to be active and executed
+        harness.charm.leadership_gate.get_status = MagicMock(return_value=ActiveStatus())
+
+        harness.charm.on.install.emit()
+
+        # Add relation without data.
+        harness.add_relation(
+            relation_name=GRPC_RELATION_NAME,
+            remote_app="other-app",
+            app_data={"name": "some-name"},
+        )
+
+        assert isinstance(harness.charm.grpc.component.get_status(), WaitingStatus)
 
     def test_with_ingress_relation(self, harness):
         """Test that the ingress_relation Component is active when an ingress is present."""
@@ -136,7 +173,7 @@ class TestCharm:
         harness.begin_with_initial_hooks()
 
         # Now mock out the grpc relation's get_data to return an empty dict
-        harness.charm.grpc.component.get_data = lambda: {}
+        harness.charm.grpc.component.get_service_info = lambda: {}
 
         assert isinstance(harness.charm.envoy_config_generator.status, BlockedStatus)
 
@@ -167,11 +204,8 @@ def setup_ingress_relation(harness: Harness):
 
 def setup_grpc_relation(harness: Harness, name: str, port: str):
     rel_id = harness.add_relation(
-        relation_name="grpc",
+        relation_name=GRPC_RELATION_NAME,
         remote_app=name,
-        app_data={
-            "_supported_versions": "- v1",
-            "data": yaml.dump({"service": name, "port": port}),
-        },
+        app_data=MOCK_GRPC_DATA,
     )
     return rel_id
