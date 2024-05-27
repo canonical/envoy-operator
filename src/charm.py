@@ -12,7 +12,6 @@ from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.observability_libs.v1.kubernetes_service_patch import KubernetesServicePatch
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from lightkube.models.core_v1 import ServicePort
-
 from ops.charm import CharmBase
 from ops.main import main
 
@@ -94,10 +93,12 @@ class EnvoyOperator(CharmBase):
                             "http_port": self.config["http-port"],
                             "upstream_service": self.grpc.component.get_service_info().name,
                             "upstream_port": self.grpc.component.get_service_info().port,
-                        }
+                        },
                     )
                 ],
-                inputs_getter=lambda: EnvoyPebbleServiceInputs(config_path=ENVOY_CONFIG_FILE_DESTINATION_PATH),
+                inputs_getter=lambda: EnvoyPebbleServiceInputs(
+                    config_path=ENVOY_CONFIG_FILE_DESTINATION_PATH
+                ),
             ),
             depends_on=[self.grpc],
         )
