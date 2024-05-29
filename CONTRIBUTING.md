@@ -14,4 +14,4 @@ Envoy use a Jinja2 template to store its `envoy.yaml` and applies during its dep
 
 ### Things to pay attention
 * Dockerfile changes are not relevant since the charm uses the image this Dockerfile produces.
-* In order to update the charm's deployment (image, ENV variables, services etc), build and compare the kfp manifests as instructed in the [kfp-operators CONTRIBUTING.md file](https://github.com/canonical/kfp-operators/blob/69d4a0b3942cccaf7319f0c68807cbb0b6fe1b9b/CONTRIBUTING.md#spot-the-differences-between-versions-of-a-manifest-file) and update according to envoy-related changes.
+* In order to update the charm's deployment (image, ENV variables, services etc), build and compare the kfp manifests as instructed in the [kfp-operators CONTRIBUTING.md file](https://github.com/canonical/kfp-operators/blob/main/CONTRIBUTING.md#spot-the-differences-between-versions-of-a-manifest-file) and update according to envoy-related changes.
