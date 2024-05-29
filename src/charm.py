@@ -15,12 +15,12 @@ from lightkube.models.core_v1 import ServicePort
 from ops.charm import CharmBase
 from ops.main import main
 
-from components.config_generation import GenerateEnvoyConfig, GenerateEnvoyConfigInputs
 from components.ingress import IngressRelationWarnIfMissing, IngressRelationWarnIfMissingInputs
 from components.k8s_service_info_requirer_component import K8sServiceInfoRequirerComponent
 from components.pebble import EnvoyPebbleService, EnvoyPebbleServiceInputs
 
-ENVOY_CONFIG_FILE_PATH = "/envoy/envoy.json"
+ENVOY_CONFIG_FILE_DESTINATION_PATH = "/envoy/envoy.yaml"
+ENVOY_CONFIG_FILE_SOURCE_PATH = "src/templates/envoy.yaml.j2"
 GRPC_RELATION_NAME = "grpc"
 METRICS_PATH = "/stats/prometheus"
 
@@ -78,20 +78,6 @@ class EnvoyOperator(CharmBase):
             depends_on=[self.ingress_relation],
         )
 
-        self.envoy_config_generator = self.charm_reconciler.add(
-            GenerateEnvoyConfig(
-                charm=self,
-                name="envoy_config_generator",
-                inputs_getter=lambda: GenerateEnvoyConfigInputs(
-                    admin_port=int(self.config["admin-port"]),
-                    http_port=int(self.config["http-port"]),
-                    upstream_service=self.grpc.component.get_service_info().name,
-                    upstream_port=self.grpc.component.get_service_info().port,
-                ),
-            ),
-            depends_on=[self.grpc],
-        )
-
         self.envoy_pebble_container = self.charm_reconciler.add(
             component=EnvoyPebbleService(
                 charm=self,
@@ -100,13 +86,21 @@ class EnvoyOperator(CharmBase):
                 container_name="envoy",
                 files_to_push=[
                     LazyContainerFileTemplate(
-                        destination_path=ENVOY_CONFIG_FILE_PATH,
-                        source_template=self.envoy_config_generator.component.get_config,
+                        destination_path=ENVOY_CONFIG_FILE_DESTINATION_PATH,
+                        source_template_path=ENVOY_CONFIG_FILE_SOURCE_PATH,
+                        context=lambda: {
+                            "admin_port": self.config["admin-port"],
+                            "http_port": self.config["http-port"],
+                            "upstream_service": self.grpc.component.get_service_info().name,
+                            "upstream_port": self.grpc.component.get_service_info().port,
+                        },
                     )
                 ],
-                inputs_getter=lambda: EnvoyPebbleServiceInputs(config_path=ENVOY_CONFIG_FILE_PATH),
+                inputs_getter=lambda: EnvoyPebbleServiceInputs(
+                    config_path=ENVOY_CONFIG_FILE_DESTINATION_PATH
+                ),
             ),
-            depends_on=[self.envoy_config_generator],
+            depends_on=[self.grpc],
         )
 
         self.charm_reconciler.install_default_event_handlers()
