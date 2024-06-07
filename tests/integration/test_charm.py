@@ -204,6 +204,7 @@ async def assert_metadata_endpoint_is_served(ops_test, lightkube_client):
     assert res_status != 404
     log.info("Endpoint /ml_metadata is reachable.")
 
+
 # Commenting out due to https://github.com/canonical/envoy-operator/issues/106
 # @tenacity.retry(
 #     stop=tenacity.stop_after_delay(10),
