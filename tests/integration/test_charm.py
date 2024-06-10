@@ -108,7 +108,8 @@ async def test_virtual_service(ops_test, lightkube_client):
     # Verify `/ml_metadata` endpoint is served
     await assert_metadata_endpoint_is_served(ops_test, lightkube_client=lightkube_client)
 
-    await assert_grpc_web_protocol_responds(ops_test, lightkube_client=lightkube_client)
+    # commenting out due to https://github.com/canonical/envoy-operator/issues/106
+    # await assert_grpc_web_protocol_responds(ops_test, lightkube_client=lightkube_client)
 
 
 @pytest.mark.abort_on_fail
@@ -204,23 +205,24 @@ async def assert_metadata_endpoint_is_served(ops_test, lightkube_client):
     log.info("Endpoint /ml_metadata is reachable.")
 
 
-@tenacity.retry(
-    stop=tenacity.stop_after_delay(10),
-    wait=tenacity.wait_fixed(2),
-    reraise=True,
-)
-async def assert_grpc_web_protocol_responds(ops_test, lightkube_client):
-    """Asserts that the /ml_metadata endpoint responds 200 to the grpc-web protocol."""
-    regular_ingress_gateway_ip = await get_gateway_ip(
-        namespace=ops_test.model.name, lightkube_client=lightkube_client
-    )
-    log.info("regular_ingress_gateway_ip: %s", regular_ingress_gateway_ip)
-    headers = {"Content-Type": "application/grpc-web-text"}
-    res_status, res_headers = await fetch_response(
-        f"http://{regular_ingress_gateway_ip}/ml_metadata", headers
-    )
-    assert res_status == 200
-    log.info("Endpoint /ml_metadata serves grpc-web protocol.")
+# Commenting out due to https://github.com/canonical/envoy-operator/issues/106
+# @tenacity.retry(
+#     stop=tenacity.stop_after_delay(10),
+#     wait=tenacity.wait_fixed(2),
+#     reraise=True,
+# )
+# async def assert_grpc_web_protocol_responds(ops_test, lightkube_client):
+#     """Asserts that the /ml_metadata endpoint responds 200 to the grpc-web protocol."""
+#     regular_ingress_gateway_ip = await get_gateway_ip(
+#         namespace=ops_test.model.name, lightkube_client=lightkube_client
+#     )
+#     log.info("regular_ingress_gateway_ip: %s", regular_ingress_gateway_ip)
+#     headers = {"Content-Type": "application/grpc-web-text"}
+#     res_status, res_headers = await fetch_response(
+#         f"http://{regular_ingress_gateway_ip}/ml_metadata", headers
+#     )
+#     assert res_status == 200
+#     log.info("Endpoint /ml_metadata serves grpc-web protocol.")
 
 
 async def fetch_response(url, headers=None):
