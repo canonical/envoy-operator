@@ -1,18 +1,25 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import json
 import logging
 from pathlib import Path
 
 import aiohttp
 import pytest
-import requests
 import tenacity
 import yaml
+from charmed_kubeflow_chisme.testing import (
+    GRAFANA_AGENT_APP,
+    assert_alert_rules,
+    assert_logging,
+    assert_metrics_endpoint,
+    deploy_and_assert_grafana_agent,
+    get_alert_rules,
+)
 from lightkube import Client
 from lightkube.generic_resource import create_namespaced_resource
 from lightkube.resources.core_v1 import Service
+from pytest_operator.plugin import OpsTest
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 CHARM_ROOT = "."
@@ -31,15 +38,6 @@ ISTIO_GATEWAY_APP_NAME = "istio-ingressgateway"
 ISTIO_GATEWAY_TRUST = True
 ISTIO_GATEWAY_CONFIG = {"kind": "ingress"}
 
-PROMETHEUS_K8S = "prometheus-k8s"
-PROMETHEUS_K8S_CHANNEL = "latest/stable"
-PROMETHEUS_K8S_TRUST = True
-GRAFANA_K8S = "grafana-k8s"
-GRAFANA_K8S_CHANNEL = "latest/stable"
-GRAFANA_K8S_TRUST = True
-PROMETHEUS_SCRAPE_K8S = "prometheus-scrape-config-k8s"
-PROMETHEUS_SCRAPE_K8S_CHANNEL = "latest/stable"
-PROMETHEUS_SCRAPE_CONFIG = {"scrape_interval": "30s"}
 log = logging.getLogger(__name__)
 
 
@@ -56,7 +54,7 @@ async def test_build_and_deploy(ops_test):
     image_path = METADATA["resources"]["oci-image"]["upstream-source"]
     resources = {"oci-image": image_path}
     await ops_test.model.deploy(charm, resources=resources, trust=True)
-    await ops_test.model.add_relation(ENVOY_APP_NAME, MLMD)
+    await ops_test.model.integrate(ENVOY_APP_NAME, MLMD)
     await ops_test.model.wait_for_idle(
         apps=[ENVOY_APP_NAME, MLMD], status="active", raise_on_blocked=False, idle_period=30
     )
@@ -67,6 +65,11 @@ async def test_build_and_deploy(ops_test):
         MLMD,
     ]
     assert all([endpoint.name in ("grpc", "k8s-service-info") for endpoint in relation.endpoints])
+
+    # Deploying grafana-agent-k8s and add all relations
+    await deploy_and_assert_grafana_agent(
+        ops_test.model, ENVOY_APP_NAME, metrics=True, dashboard=True, logging=True
+    )
 
 
 @pytest.mark.abort_on_fail
@@ -85,13 +88,14 @@ async def test_virtual_service(ops_test, lightkube_client):
         trust=ISTIO_GATEWAY_TRUST,
     )
 
-    await ops_test.model.add_relation(
+    await ops_test.model.integrate(
         ISTIO_PILOT,
         ISTIO_GATEWAY_APP_NAME,
     )
-    await ops_test.model.add_relation(f"{ISTIO_PILOT}:ingress", f"{ENVOY_APP_NAME}:ingress")
+    await ops_test.model.integrate(f"{ISTIO_PILOT}:ingress", f"{ENVOY_APP_NAME}:ingress")
 
     await ops_test.model.wait_for_idle(
+        apps=[ENVOY_APP_NAME, MLMD, ISTIO_PILOT, ISTIO_GATEWAY_APP_NAME],
         status="active",
         raise_on_blocked=False,
         raise_on_error=True,
@@ -110,67 +114,6 @@ async def test_virtual_service(ops_test, lightkube_client):
 
     # commenting out due to https://github.com/canonical/envoy-operator/issues/106
     # await assert_grpc_web_protocol_responds(ops_test, lightkube_client=lightkube_client)
-
-
-@pytest.mark.abort_on_fail
-async def test_deploy_with_prometheus_and_grafana(ops_test):
-    # Deploy and relate prometheus
-    await ops_test.model.deploy(
-        PROMETHEUS_K8S,
-        channel=PROMETHEUS_K8S_CHANNEL,
-        trust=PROMETHEUS_K8S_TRUST,
-    )
-    await ops_test.model.deploy(
-        GRAFANA_K8S,
-        channel=GRAFANA_K8S_CHANNEL,
-        trust=GRAFANA_K8S_TRUST,
-    )
-    await ops_test.model.deploy(
-        PROMETHEUS_SCRAPE_K8S,
-        channel=PROMETHEUS_SCRAPE_K8S_CHANNEL,
-        config=PROMETHEUS_SCRAPE_CONFIG,
-    )
-
-    await ops_test.model.add_relation(
-        f"{PROMETHEUS_K8S}:grafana-dashboard",
-        f"{GRAFANA_K8S}:grafana-dashboard",
-    )
-    await ops_test.model.add_relation(
-        f"{PROMETHEUS_K8S}:metrics-endpoint",
-        f"{PROMETHEUS_SCRAPE_K8S}:metrics-endpoint",
-    )
-
-    await ops_test.model.add_relation(ENVOY_APP_NAME, GRAFANA_K8S)
-    await ops_test.model.add_relation(PROMETHEUS_K8S, ENVOY_APP_NAME)
-    await ops_test.model.add_relation(PROMETHEUS_SCRAPE_K8S, ENVOY_APP_NAME)
-
-    await ops_test.model.wait_for_idle(
-        [
-            ENVOY_APP_NAME,
-            PROMETHEUS_K8S,
-            GRAFANA_K8S,
-            PROMETHEUS_SCRAPE_K8S,
-        ],
-        status="active",
-    )
-
-
-async def test_correct_observability_setup(ops_test):
-    status = await ops_test.model.get_status()
-    prometheus_unit_ip = status["applications"][PROMETHEUS_K8S]["units"][f"{PROMETHEUS_K8S}/0"][
-        "address"
-    ]
-    r = requests.get(
-        f'http://{prometheus_unit_ip}:9090/api/v1/query?query=up{{juju_application="{ENVOY_APP_NAME}"}}'  # noqa
-    )
-    response = json.loads(r.content.decode("utf-8"))
-    assert response["status"] == "success"
-
-    response_metric = response["data"]["result"][0]["metric"]
-    assert response_metric["juju_application"] == ENVOY_APP_NAME
-    assert response_metric["juju_charm"] == ENVOY_APP_NAME
-    assert response_metric["juju_model"] == ops_test.model_name
-    assert response_metric["juju_unit"] == f"{ENVOY_APP_NAME}/0"
 
 
 def assert_virtualservice_exists(name: str, namespace: str, lightkube_client):
@@ -246,3 +189,27 @@ async def get_gateway_ip(
     service = lightkube_client.get(Service, service_name, namespace=namespace)
     gateway_ip = service.status.loadBalancer.ingress[0].ip
     return gateway_ip
+
+
+async def test_alert_rules(ops_test: OpsTest):
+    """Test check charm alert rules and rules defined in relation data bag."""
+    app = ops_test.model.applications[ENVOY_APP_NAME]
+    alert_rules = get_alert_rules()
+    log.info("found alert_rules: %s", alert_rules)
+    await assert_alert_rules(app, alert_rules)
+
+
+async def test_metrics_enpoint(ops_test: OpsTest):
+    """Test metrics_endpoints are defined in relation data bag and their accessibility.
+    This function gets all the metrics_endpoints from the relation data bag, checks if
+    they are available from the grafana-agent-k8s charm and finally compares them with the
+    ones provided to the function.
+    """
+    app = ops_test.model.applications[ENVOY_APP_NAME]
+    await assert_metrics_endpoint(app, metrics_port=9901, metrics_path="/stats/prometheus")
+
+
+async def test_logging(ops_test: OpsTest):
+    """Test logging is defined in relation data bag."""
+    app = ops_test.model.applications[GRAFANA_AGENT_APP]
+    await assert_logging(app)

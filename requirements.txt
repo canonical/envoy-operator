@@ -19,7 +19,7 @@ charmed-kubeflow-chisme==0.3.0
     # via -r requirements.in
 charset-normalizer==3.3.2
     # via requests
-cosl==0.0.10
+cosl==0.0.12
     # via -r requirements.in
 deepdiff==6.2.1
     # via charmed-kubeflow-chisme
@@ -50,7 +50,7 @@ markupsafe==2.1.5
     # via jinja2
 oci-image==1.0.0
     # via -r requirements.in
-ops==2.11.0
+ops==2.14.0
     # via
     #   -r requirements.in
     #   charmed-kubeflow-chisme
