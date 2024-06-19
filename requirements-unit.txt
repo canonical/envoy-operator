@@ -87,7 +87,7 @@ markupsafe==2.1.5
     #   jinja2
 oci-image==1.0.0
     # via -r requirements.txt
-ops==2.11.0
+ops==2.14.0
     # via
     #   -r requirements.txt
     #   charmed-kubeflow-chisme

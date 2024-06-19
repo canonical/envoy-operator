@@ -16,6 +16,8 @@ anyio==4.3.0
     # via
     #   -r requirements.txt
     #   httpx
+appnope==0.1.4
+    # via ipython
 asttokens==2.4.1
     # via stack-data
 async-timeout==4.0.3
@@ -174,7 +176,7 @@ oauthlib==3.2.2
     #   requests-oauthlib
 oci-image==1.0.0
     # via -r requirements.txt
-ops==2.11.0
+ops==2.14.0
     # via
     #   -r requirements.txt
     #   charmed-kubeflow-chisme
