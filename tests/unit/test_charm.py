@@ -1,6 +1,6 @@
-# Copyright 2021 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from ops import BlockedStatus
@@ -28,6 +28,12 @@ def mocked_kubernetes_service_patch(mocker):
 
 
 class TestCharm:
+
+    def test_log_forwarding(self, harness: Harness):
+        with patch("charm.LogForwarder") as mock_logging:
+            harness.begin()
+            mock_logging.assert_called_once_with(charm=harness.charm)
+
     def test_not_leader(self, harness):
         """Test that the charm is not active when not leader."""
         harness.begin_with_initial_hooks()
