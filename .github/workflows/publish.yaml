@@ -85,7 +85,7 @@ jobs:
 
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@orfeas-k-test
-        # tr
+        # trigger
         with:
           credentials: ${{ secrets.CHARMCRAFT_CREDENTIALS }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
