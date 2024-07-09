@@ -92,3 +92,4 @@ jobs:
           channel: ${{ steps.parse-inputs.outputs.destination_channel }}
           tag-prefix: ${{ steps.parse-inputs.outputs.tag_prefix }}
           resource-overrides: "oci-image:102"
+          upload-image: "false"
