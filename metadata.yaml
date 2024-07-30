@@ -10,7 +10,7 @@ resources:
     type: oci-image
     description: Backing OCI image
     auto-fetch: true
-    upstream-source: gcr.io/ml-pipeline/metadata-envoy:2.0.2
+    upstream-source: envoyproxy/envoy:v1.12.7
 provides:
   grpc-web:
     interface: k8s-service
