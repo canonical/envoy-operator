@@ -221,7 +221,7 @@ class Operator(CharmBase):
                             },
                             {
                                 "name": "http",
-                                "containerPort": int(8082),
+                                "containerPort": int(self.model.config["http-port"]),
                             },
                         ],
                         "volumeConfig": [
