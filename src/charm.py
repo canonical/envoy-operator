@@ -236,6 +236,21 @@ class Operator(CharmBase):
                                 ],
                             }
                         ],
+                        "kubernetes": {
+                            "livenessProbe": {
+                                "initialDelaySeconds": 15,
+                                "httpGet": {
+                                    "path": "/",
+                                    "port": 9090,
+                                    "httpHeaders": [
+                                        {
+                                            "name": "Content-Type",
+                                            "value": "application/grpc-web-text",
+                                        }
+                                    ],
+                                },
+                            }
+                        },
                     }
                 ],
             },
