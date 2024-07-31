@@ -221,7 +221,7 @@ class Operator(CharmBase):
                             },
                             {
                                 "name": "http",
-                                "containerPort": int(self.model.config["http-port"]),
+                                "containerPort": int(8082),
                             },
                         ],
                         "volumeConfig": [
@@ -238,7 +238,7 @@ class Operator(CharmBase):
                         ],
                         "kubernetes":{
                             "livenessProbe":{
-                                "initialDelaySeconds": "15",
+                                "initialDelaySeconds": 15,
                                 "httpGet":{
                                     "path": "/",
                                     "port": "9090",
