@@ -241,7 +241,7 @@ class Operator(CharmBase):
                                 "initialDelaySeconds": 15,
                                 "httpGet":{
                                     "path": "/",
-                                    "port": "9090",
+                                    "port": 9090,
                                     "httpHeaders":[
                                         {
                                             "name": "Content-Type",
