@@ -164,13 +164,15 @@ class Operator(CharmBase):
 
             interfaces = self._get_interfaces()
 
+            http_port = int(self.model.config["http-port"])
+
             image_details = self._check_image_details()
 
             upstreams = self._check_grpc(interfaces)
 
             self._send_info(interfaces)
 
-            self._send_data_to_ingress_provider(interfaces)
+            self._send_data_to_ingress_provider(interfaces, http_port)
 
         except CheckFailed as check_failed:
             self.model.unit.status = check_failed.status
@@ -190,7 +192,7 @@ class Operator(CharmBase):
             listeners=[
                 get_listener(
                     cluster=upstream["service"],
-                    port=int(self.model.config["http-port"]),
+                    port=http_port,
                 )
                 for upstream in upstreams
             ],
@@ -221,7 +223,7 @@ class Operator(CharmBase):
                             },
                             {
                                 "name": "http",
-                                "containerPort": int(self.model.config["http-port"]),
+                                "containerPort": http_port,
                             },
                         ],
                         "volumeConfig": [
@@ -241,7 +243,7 @@ class Operator(CharmBase):
                                 "initialDelaySeconds": 15,
                                 "httpGet": {
                                     "path": "/",
-                                    "port": 9090,
+                                    "port": http_port,
                                     "httpHeaders": [
                                         {
                                             "name": "Content-Type",
@@ -297,7 +299,7 @@ class Operator(CharmBase):
             raise CheckFailed("Waiting for upstream gRPC connection information.", WaitingStatus)
         return upstreams
 
-    def _send_data_to_ingress_provider(self, interfaces):
+    def _send_data_to_ingress_provider(self, interfaces, port: int):
         """Send data to the ingress relation data bag so the VirtualServices provider configures
         a VirtualService routing traffic from `/ml_metadata` path to envoy service.
 
@@ -309,7 +311,7 @@ class Operator(CharmBase):
                     "prefix": "/ml_metadata",
                     "rewrite": "/ml_metadata",
                     "service": self.model.app.name,
-                    "port": int(self.model.config["http-port"]),
+                    "port": port,
                 }
             )
         else:
