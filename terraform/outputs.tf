@@ -4,15 +4,15 @@ output "app_name" {
 
 output "provides" {
   value = {
-	metrics_endpoint = "metrics-endpoint",
-	grafana_dashboard = "gradana-dashboard"
+    metrics_endpoint  = "metrics-endpoint",
+    grafana_dashboard = "gradana-dashboard"
   }
 }
 
 output "requires" {
   value = {
-	grpc = "grpc",
-	ingress = "ingress",
+    grpc    = "grpc",
+    ingress = "ingress",
     logging = "logging"
   }
 }
