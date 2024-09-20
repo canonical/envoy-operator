@@ -5,7 +5,7 @@ output "app_name" {
 output "provides" {
   value = {
     metrics_endpoint  = "metrics-endpoint",
-    grafana_dashboard = "gradana-dashboard"
+    grafana_dashboard = "grafana-dashboard"
   }
 }
 
