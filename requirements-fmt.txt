@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements-fmt.in
 #
-black==24.3.0
+black==24.8.0
     # via -r requirements-fmt.in
 click==8.1.7
     # via black
@@ -12,13 +12,13 @@ isort==5.13.2
     # via -r requirements-fmt.in
 mypy-extensions==1.0.0
     # via black
-packaging==24.0
+packaging==24.2
     # via black
 pathspec==0.12.1
     # via black
-platformdirs==4.2.0
+platformdirs==4.3.6
     # via black
-tomli==2.0.1
+tomli==2.2.1
     # via black
-typing-extensions==4.10.0
+typing-extensions==4.12.2
     # via black
