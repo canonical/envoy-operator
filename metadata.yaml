@@ -11,7 +11,7 @@ resources:
     type: oci-image
     description: Backing OCI image
     auto-fetch: true
-    upstream-source: gcr.io/ml-pipeline/metadata-envoy:2.2.0
+    upstream-source: ghcr.io/canonical/envoy:1.28.2
 provides:
   metrics-endpoint:
     interface: prometheus_scrape

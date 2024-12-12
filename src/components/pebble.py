@@ -23,7 +23,7 @@ class EnvoyPebbleService(PebbleServiceComponent):
                         "override": "replace",
                         "summary": "envoy service",
                         "startup": "enabled",
-                        "command": ("/usr/local/bin/envoy" " -c" f" {config_path}"),
+                        "command": ("envoy" " -c" f" {config_path}"),
                     }
                 }
             }
