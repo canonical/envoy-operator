@@ -17,28 +17,38 @@ jobs:
 
   lint:
     name: Lint Check
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
     - name: Check out code
       uses: actions/checkout@v4
 
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v5.3.0
+      with:
+        python-version: 3.8
+
     - name: Install dependencies
-      run: sudo apt install tox
+      run: python3 -m pip install tox
 
     - name: Lint code
       run: tox -e lint
 
   unit:
     name: Unit Test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
     - name: Check out code
       uses: actions/checkout@v4
 
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v5.3.0
+      with:
+        python-version: 3.8
+
     - name: Install dependencies
-      run: sudo apt install tox
+      run: python3 -m pip install tox
 
     - name: Run unit tests
       run: tox -e unit
@@ -48,14 +58,19 @@ jobs:
     uses: canonical/charmed-kubeflow-workflows/.github/workflows/terraform-checks.yaml@main
     with:
       charm-path: .
-      
+
   deploy:
     name: Integration Tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
     - name: Check out repo
       uses: actions/checkout@v4
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v5.3.0
+      with:
+        python-version: 3.8
 
     - name: Setup operator environment
       uses: charmed-kubernetes/actions-operator@main
@@ -67,7 +82,7 @@ jobs:
         charmcraft-channel: 3.x/stable
 
     - name: Test
-      run: sg snap_microk8s -c "tox -vve integration -- --model testing"
+      run: tox -vve integration -- --model testing
 
     - name: Get all
       run: kubectl get all -A
