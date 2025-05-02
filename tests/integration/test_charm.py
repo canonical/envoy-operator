@@ -26,10 +26,10 @@ CHARM_ROOT = "."
 ENVOY_APP_NAME = "envoy"
 
 MLMD = "mlmd"
-MLMD_CHANNEL = "latest/edge"
+MLMD_CHANNEL = "ckf-1.10/stable"
 MLMD_TRUST = True
 
-ISTIO_OPERATORS_CHANNEL = "latest/edge"
+ISTIO_OPERATORS_CHANNEL = "1.24/stable"
 ISTIO_PILOT = "istio-pilot"
 ISTIO_PILOT_TRUST = True
 ISTIO_PILOT_CONFIG = {"default-gateway": "kubeflow-gateway"}
