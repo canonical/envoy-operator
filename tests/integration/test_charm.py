@@ -16,6 +16,7 @@ from charmed_kubeflow_chisme.testing import (
     deploy_and_assert_grafana_agent,
     get_alert_rules,
 )
+from charms_dependencies import ISTIO_GATEWAY, ISTIO_PILOT, MLMD
 from lightkube import Client
 from lightkube.generic_resource import create_namespaced_resource
 from lightkube.resources.core_v1 import Service
@@ -23,20 +24,9 @@ from pytest_operator.plugin import OpsTest
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 CHARM_ROOT = "."
-ENVOY_APP_NAME = "envoy"
-
-MLMD = "mlmd"
-MLMD_CHANNEL = "latest/edge"
-MLMD_TRUST = True
-
-ISTIO_OPERATORS_CHANNEL = "latest/edge"
-ISTIO_PILOT = "istio-pilot"
-ISTIO_PILOT_TRUST = True
-ISTIO_PILOT_CONFIG = {"default-gateway": "kubeflow-gateway"}
-ISTIO_GATEWAY = "istio-gateway"
+ENVOY_APP_NAME = METADATA["name"]
 ISTIO_GATEWAY_APP_NAME = "istio-ingressgateway"
-ISTIO_GATEWAY_TRUST = True
-ISTIO_GATEWAY_CONFIG = {"kind": "ingress"}
+
 
 log = logging.getLogger(__name__)
 
@@ -49,20 +39,20 @@ def lightkube_client() -> Client:
 
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test):
-    await ops_test.model.deploy(MLMD, channel=MLMD_CHANNEL, trust=MLMD_TRUST)
+    await ops_test.model.deploy(MLMD.charm, channel=MLMD.channel, trust=MLMD.trust)
     charm = await ops_test.build_charm(CHARM_ROOT)
     image_path = METADATA["resources"]["oci-image"]["upstream-source"]
     resources = {"oci-image": image_path}
     await ops_test.model.deploy(charm, resources=resources, trust=True)
-    await ops_test.model.integrate(ENVOY_APP_NAME, MLMD)
+    await ops_test.model.integrate(ENVOY_APP_NAME, MLMD.charm)
     await ops_test.model.wait_for_idle(
-        apps=[ENVOY_APP_NAME, MLMD], status="active", raise_on_blocked=False, idle_period=30
+        apps=[ENVOY_APP_NAME, MLMD.charm], status="active", raise_on_blocked=False, idle_period=30
     )
 
     relation = ops_test.model.relations[0]
     assert [app.entity_id for app in relation.applications] == [
         ENVOY_APP_NAME,
-        MLMD,
+        MLMD.charm,
     ]
     assert all([endpoint.name in ("grpc", "k8s-service-info") for endpoint in relation.endpoints])
 
@@ -75,27 +65,27 @@ async def test_build_and_deploy(ops_test):
 @pytest.mark.abort_on_fail
 async def test_virtual_service(ops_test, lightkube_client):
     await ops_test.model.deploy(
-        entity_url=ISTIO_PILOT,
-        channel=ISTIO_OPERATORS_CHANNEL,
-        config=ISTIO_PILOT_CONFIG,
-        trust=ISTIO_PILOT_TRUST,
+        entity_url=ISTIO_PILOT.charm,
+        channel=ISTIO_PILOT.channel,
+        config=ISTIO_PILOT.config,
+        trust=ISTIO_PILOT.trust,
     )
     await ops_test.model.deploy(
-        entity_url=ISTIO_GATEWAY,
+        entity_url=ISTIO_GATEWAY.charm,
         application_name=ISTIO_GATEWAY_APP_NAME,
-        channel=ISTIO_OPERATORS_CHANNEL,
-        config=ISTIO_GATEWAY_CONFIG,
-        trust=ISTIO_GATEWAY_TRUST,
+        channel=ISTIO_GATEWAY.channel,
+        config=ISTIO_GATEWAY.config,
+        trust=ISTIO_GATEWAY.trust,
     )
 
     await ops_test.model.integrate(
-        ISTIO_PILOT,
+        ISTIO_PILOT.charm,
         ISTIO_GATEWAY_APP_NAME,
     )
-    await ops_test.model.integrate(f"{ISTIO_PILOT}:ingress", f"{ENVOY_APP_NAME}:ingress")
+    await ops_test.model.integrate(f"{ISTIO_PILOT.charm}:ingress", f"{ENVOY_APP_NAME}:ingress")
 
     await ops_test.model.wait_for_idle(
-        apps=[ENVOY_APP_NAME, MLMD, ISTIO_PILOT, ISTIO_GATEWAY_APP_NAME],
+        apps=[ENVOY_APP_NAME, MLMD.charm, ISTIO_PILOT.charm, ISTIO_GATEWAY_APP_NAME],
         status="active",
         raise_on_blocked=False,
         raise_on_error=True,
