@@ -40,7 +40,7 @@ cffi==1.17.1
     #   -r requirements.txt
     #   cryptography
     #   pynacl
-charmed-kubeflow-chisme==0.4.10
+charmed-kubeflow-chisme==0.4.11
     # via -r requirements.txt
 charset-normalizer==3.4.2
     # via
