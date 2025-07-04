@@ -1,13 +1,10 @@
 # Copyright 2021 Canonical Ltd.
 # See LICENSE file for licensing details.
-charmed-kubeflow-chisme >= 0.3.0
+# "charmed-kubeflow-chisme" pinned to avoid closed "latest" tracks with COS charms, see:
+# https://github.com/canonical/charmed-kubeflow-chisme/issues/155
+charmed-kubeflow-chisme>=0.4.11
 # from prometheus_k8s.v0.prometheus_scrape.py
 cosl
 oci-image
 ops
-# # pydantic>=2.7 requires rustc v1.76 or newer,
-# which is not available in the base OS this charm has at the moment (Ubuntu 20.04).
-# To avoid build-time errors, pydantic has to be pinned to a version that can be built
-# with the rustc version that the OS can provide.
-# Remove this pin when the base OS can install rustc v1.76 or newer.
-pydantic>=2.6,<2.7
+pydantic

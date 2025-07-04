@@ -13,8 +13,8 @@ from charms.loki_k8s.v1.loki_push_api import LogForwarder
 from charms.observability_libs.v1.kubernetes_service_patch import KubernetesServicePatch
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from lightkube.models.core_v1 import ServicePort
+from ops import main
 from ops.charm import CharmBase
-from ops.main import main
 
 from components.ingress import IngressRelationWarnIfMissing, IngressRelationWarnIfMissingInputs
 from components.k8s_service_info_requirer_component import K8sServiceInfoRequirerComponent
