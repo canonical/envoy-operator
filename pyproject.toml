@@ -86,7 +86,7 @@ optional = true
 charmed-kubeflow-chisme = ">=0.4.11"
 aiohttp = "^3.10.11"
 juju = "^3.6.0.0"
-lightkube = "^0.15.6"
+lightkube = "^0.17.0"
 pytest-operator = "^0.38.0"
 selenium = "^4.27.1"
 selenium-wire = "^5.1.0"
