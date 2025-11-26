@@ -13,6 +13,9 @@ minversion = "6.0"
 log_cli_level = "INFO"
 
 # Formatting tools configuration
+[tool.pyright]
+extraPaths = ["lib"]
+
 [tool.black]
 line-length = 99
 target-version = ["py38"]
@@ -51,6 +54,8 @@ cosl = "^1.0.0"
 oci-image = "^1.0.0"
 ops = "^2.22.0"
 pydantic = "^2.11.7"
+charmed-service-mesh-helpers = ">=0.2.0"
+lightkube-extensions = ">=0.2.0"
 
 [tool.poetry.group.fmt]
 optional = true
