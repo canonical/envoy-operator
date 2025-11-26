@@ -6,7 +6,7 @@ version = "2.6.1"
 description = "Happy Eyeballs for asyncio"
 optional = false
 python-versions = ">=3.9"
-groups = ["integration"]
+groups = ["charm", "integration"]
 files = [
     {file = "aiohappyeyeballs-2.6.1-py3-none-any.whl", hash = "sha256:f349ba8f4b75cb25c99c5c2d84e997e485204d2902a9597802b0371f09331fb8"},
     {file = "aiohappyeyeballs-2.6.1.tar.gz", hash = "sha256:c3f9d0113123803ccadfdf3f0faa505bc78e6a72d1cc4806cbd719826e943558"},
@@ -18,7 +18,7 @@ version = "3.13.2"
 description = "Async http client/server framework (asyncio)"
 optional = false
 python-versions = ">=3.9"
-groups = ["integration"]
+groups = ["charm", "integration"]
 files = [
     {file = "aiohttp-3.13.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:2372b15a5f62ed37789a6b383ff7344fc5b9f243999b0cd9b629d8bc5f5b4155"},
     {file = "aiohttp-3.13.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:e7f8659a48995edee7229522984bd1009c1213929c769c2daa80b40fe49a180c"},
@@ -160,7 +160,7 @@ version = "1.4.0"
 description = "aiosignal: a list of registered asynchronous callbacks"
 optional = false
 python-versions = ">=3.9"
-groups = ["integration"]
+groups = ["charm", "integration"]
 files = [
     {file = "aiosignal-1.4.0-py3-none-any.whl", hash = "sha256:053243f8b92b990551949e63930a839ff0cf0b0ebbe0597b0f3fb19e1a0fe82e"},
     {file = "aiosignal-1.4.0.tar.gz", hash = "sha256:f47eecd9468083c2029cc99945502cb7708b082c232f9aca65da147157b251c7"},
@@ -659,17 +659,27 @@ pycparser = {version = "*", markers = "implementation_name != \"PyPy\""}
 
 [[package]]
 name = "charmed-kubeflow-chisme"
+<<<<<<< HEAD
 version = "0.4.14"
+=======
+version = "0.4.15"
+>>>>>>> 9b6ae5b (chore: add istio mesh libraries and dependencies)
 description = "A collection of helpers for Charms maintained by the Charmed Kubeflow team"
 optional = false
 python-versions = ">=3.6"
 groups = ["charm", "integration"]
 files = [
+<<<<<<< HEAD
     {file = "charmed_kubeflow_chisme-0.4.14-py3-none-any.whl", hash = "sha256:4e9fb4761fbb14b0197e8946d716506685d24995850da7dd3391dc44664abd7a"},
     {file = "charmed_kubeflow_chisme-0.4.14.tar.gz", hash = "sha256:08c5ce0b878080310e086484ed98b104233012e6ec1af0a94ac0616eb13667f6"},
+=======
+    {file = "charmed_kubeflow_chisme-0.4.15-py3-none-any.whl", hash = "sha256:5ed71e865f1874dd10eb9b8a560e03f3bc947f7f8a5ab7d57a5f095761281539"},
+    {file = "charmed_kubeflow_chisme-0.4.15.tar.gz", hash = "sha256:3080fd25048b9055b52430356542df91f7072bbcae805d0410db47c0001e5bf8"},
+>>>>>>> 9b6ae5b (chore: add istio mesh libraries and dependencies)
 ]
 
 [package.dependencies]
+aiohttp = ">=3.8,<4.0"
 deepdiff = "<=6.2.1"
 httpx = "<0.28.0"
 jinja2 = "*"
@@ -683,6 +693,24 @@ tenacity = "*"
 
 [package.extras]
 test = ["black", "pytest"]
+
+[[package]]
+name = "charmed-service-mesh-helpers"
+version = "0.2.0"
+description = "Helpers for the Service Mesh charms."
+optional = false
+python-versions = "~=3.8"
+groups = ["charm"]
+files = [
+    {file = "charmed_service_mesh_helpers-0.2.0-py3-none-any.whl", hash = "sha256:913e2a5bfb2db445e4b95085f8c2a8b4dea1036beedd229efca9217877c1da15"},
+    {file = "charmed_service_mesh_helpers-0.2.0.tar.gz", hash = "sha256:4e62fe6f917d4933610c2f8cfb30a90d46ea026fa302988cffb879abd423ca5a"},
+]
+
+[package.dependencies]
+pydantic = "*"
+
+[package.extras]
+dev = ["codespell", "coverage[toml]", "pyright", "pytest", "ruff"]
 
 [[package]]
 name = "charset-normalizer"
@@ -1155,7 +1183,7 @@ version = "1.8.0"
 description = "A list-like structure which implements collections.abc.MutableSequence"
 optional = false
 python-versions = ">=3.9"
-groups = ["integration"]
+groups = ["charm", "integration"]
 files = [
     {file = "frozenlist-1.8.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:b37f6d31b3dcea7deb5e9696e529a6aa4a898adc33db82da12e4c60a7c4d2011"},
     {file = "frozenlist-1.8.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:ef2b7b394f208233e471abc541cc6991f907ffd47dc72584acee3147899d6565"},
@@ -1515,14 +1543,23 @@ ipython = {version = ">=7.31.1", markers = "python_version >= \"3.11\""}
 
 [[package]]
 name = "ipython"
+<<<<<<< HEAD
 version = "9.7.0"
+=======
+version = "9.8.0"
+>>>>>>> 9b6ae5b (chore: add istio mesh libraries and dependencies)
 description = "IPython: Productive Interactive Computing"
 optional = false
 python-versions = ">=3.11"
 groups = ["integration"]
 files = [
+<<<<<<< HEAD
     {file = "ipython-9.7.0-py3-none-any.whl", hash = "sha256:bce8ac85eb9521adc94e1845b4c03d88365fd6ac2f4908ec4ed1eb1b0a065f9f"},
     {file = "ipython-9.7.0.tar.gz", hash = "sha256:5f6de88c905a566c6a9d6c400a8fed54a638e1f7543d17aae2551133216b1e4e"},
+=======
+    {file = "ipython-9.8.0-py3-none-any.whl", hash = "sha256:ebe6d1d58d7d988fbf23ff8ff6d8e1622cfdb194daf4b7b73b792c4ec3b85385"},
+    {file = "ipython-9.8.0.tar.gz", hash = "sha256:8e4ce129a627eb9dd221c41b1d2cdaed4ef7c9da8c17c63f6f578fe231141f83"},
+>>>>>>> 9b6ae5b (chore: add istio mesh libraries and dependencies)
 ]
 
 [package.dependencies]
@@ -1724,6 +1761,22 @@ PyYAML = "*"
 dev = ["pytest", "pytest-asyncio (<0.17.0)", "respx"]
 
 [[package]]
+name = "lightkube-extensions"
+version = "0.2.0"
+description = "A collection of helpers and shared code for using Lightkube."
+optional = false
+python-versions = "~=3.8"
+groups = ["charm"]
+files = [
+    {file = "lightkube_extensions-0.2.0-py3-none-any.whl", hash = "sha256:70d8f6770bda3fff73cf493a02a57fa26d88118baef3713efffe324a71ce3919"},
+    {file = "lightkube_extensions-0.2.0.tar.gz", hash = "sha256:0fef1845fb4d0382646e35f3a0036968586cb6a866efb6dc5fc02bb359c6c89f"},
+]
+
+[package.dependencies]
+jinja2 = "*"
+lightkube = ">=0.11.0"
+
+[[package]]
 name = "lightkube-models"
 version = "1.34.0.8"
 description = "Models and Resources for lightkube module"
@@ -1890,7 +1943,7 @@ version = "6.7.0"
 description = "multidict implementation"
 optional = false
 python-versions = ">=3.9"
-groups = ["integration"]
+groups = ["charm", "integration"]
 files = [
     {file = "multidict-6.7.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:9f474ad5acda359c8758c8accc22032c6abe6dc87a8be2440d097785e27a9349"},
     {file = "multidict-6.7.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:4b7a9db5a870f780220e931d0002bbfd88fb53aceb6293251e2c839415c1b20e"},
@@ -2082,14 +2135,23 @@ files = [
 
 [[package]]
 name = "opentelemetry-api"
+<<<<<<< HEAD
 version = "1.38.0"
+=======
+version = "1.39.0"
+>>>>>>> 9b6ae5b (chore: add istio mesh libraries and dependencies)
 description = "OpenTelemetry Python API"
 optional = false
 python-versions = ">=3.9"
 groups = ["charm", "integration"]
 files = [
+<<<<<<< HEAD
     {file = "opentelemetry_api-1.38.0-py3-none-any.whl", hash = "sha256:2891b0197f47124454ab9f0cf58f3be33faca394457ac3e09daba13ff50aa582"},
     {file = "opentelemetry_api-1.38.0.tar.gz", hash = "sha256:f4c193b5e8acb0912b06ac5b16321908dd0843d75049c091487322284a3eea12"},
+=======
+    {file = "opentelemetry_api-1.39.0-py3-none-any.whl", hash = "sha256:3c3b3ca5c5687b1b5b37e5c5027ff68eacea8675241b29f13110a8ffbb8f0459"},
+    {file = "opentelemetry_api-1.39.0.tar.gz", hash = "sha256:6130644268c5ac6bdffaf660ce878f10906b3e789f7e2daa5e169b047a2933b9"},
+>>>>>>> 9b6ae5b (chore: add istio mesh libraries and dependencies)
 ]
 
 [package.dependencies]
@@ -2294,7 +2356,7 @@ version = "0.4.1"
 description = "Accelerated property cache"
 optional = false
 python-versions = ">=3.9"
-groups = ["integration"]
+groups = ["charm", "integration"]
 files = [
     {file = "propcache-0.4.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:7c2d1fa3201efaf55d730400d945b5b3ab6e672e100ba0f9a409d950ab25d7db"},
     {file = "propcache-0.4.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:1eb2994229cc8ce7fe9b3db88f5465f5fd8651672840b2e426b88cdb1a30aac8"},
@@ -3044,6 +3106,7 @@ optional = false
 python-versions = ">=3.8"
 groups = ["charm", "integration"]
 files = [
+<<<<<<< HEAD
     {file = "PyYAML-6.0.3-cp38-cp38-macosx_10_13_x86_64.whl", hash = "sha256:c2514fceb77bc5e7a2f7adfaa1feb2fb311607c9cb518dbc378688ec73d8292f"},
     {file = "PyYAML-6.0.3-cp38-cp38-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9c57bb8c96f6d1808c030b1687b9b5fb476abaa47f0db9c0101f5e9f394e97f4"},
     {file = "PyYAML-6.0.3-cp38-cp38-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl", hash = "sha256:efd7b85f94a6f21e4932043973a7ba2613b059c4a000551892ac9f1d11f5baf3"},
@@ -3051,6 +3114,8 @@ files = [
     {file = "PyYAML-6.0.3-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:6344df0d5755a2c9a276d4473ae6b90647e216ab4757f8426893b5dd2ac3f369"},
     {file = "PyYAML-6.0.3-cp38-cp38-win32.whl", hash = "sha256:3ff07ec89bae51176c0549bc4c63aa6202991da2d9a6129d7aef7f1407d3f295"},
     {file = "PyYAML-6.0.3-cp38-cp38-win_amd64.whl", hash = "sha256:5cf4e27da7e3fbed4d6c3d8e797387aaad68102272f8f9752883bc32d61cb87b"},
+=======
+>>>>>>> 9b6ae5b (chore: add istio mesh libraries and dependencies)
     {file = "pyyaml-6.0.3-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:214ed4befebe12df36bcc8bc2b64b396ca31be9304b8f59e25c11cf94a4c033b"},
     {file = "pyyaml-6.0.3-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:02ea2dfa234451bbb8772601d7b8e426c2bfa197136796224e50e35a78777956"},
     {file = "pyyaml-6.0.3-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b30236e45cf30d2b8e7b3e85881719e98507abed1011bf463a8fa23e9c3e98a8"},
@@ -3686,7 +3751,7 @@ version = "1.22.0"
 description = "Yet another URL library"
 optional = false
 python-versions = ">=3.9"
-groups = ["integration"]
+groups = ["charm", "integration"]
 files = [
     {file = "yarl-1.22.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:c7bd6683587567e5a49ee6e336e0612bec8329be1b7d4c8af5687dcdeb67ee1e"},
     {file = "yarl-1.22.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:5cdac20da754f3a723cceea5b3448e1a2074866406adeb4ef35b469d089adb8f"},
@@ -3960,4 +4025,8 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
+<<<<<<< HEAD
 content-hash = "1c303af9f09603be7f44c836e243d2900217e173393e6012660e47d361eab9e7"
+=======
+content-hash = "313dc94059f7fa9afe93995e5ee69d73224f29b369d1de156af53e796795f043"
+>>>>>>> 9b6ae5b (chore: add istio mesh libraries and dependencies)
