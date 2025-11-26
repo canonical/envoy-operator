@@ -9,7 +9,9 @@ from charmed_kubeflow_chisme.components import (
     LeadershipGateComponent,
     SdiRelationBroadcasterComponent,
 )
-from charmed_kubeflow_chisme.components.pebble_component import LazyContainerFileTemplate
+from charmed_kubeflow_chisme.components.pebble_component import (
+    LazyContainerFileTemplate,
+)
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v1.loki_push_api import LogForwarder
 from charms.observability_libs.v1.kubernetes_service_patch import KubernetesServicePatch
@@ -18,8 +20,13 @@ from lightkube.models.core_v1 import ServicePort
 from ops import main
 from ops.charm import CharmBase
 
-from components.ingress import IngressRelationWarnIfMissing, IngressRelationWarnIfMissingInputs
-from components.k8s_service_info_requirer_component import K8sServiceInfoRequirerComponent
+from components.k8s_service_info_requirer_component import (
+    K8sServiceInfoRequirerComponent,
+)
+from components.mesh import (
+    AmbientMeshRequirerComponent,
+    IstioRelationsConflictDetector,
+)
 from components.pebble import EnvoyPebbleService, EnvoyPebbleServiceInputs
 
 ENVOY_CONFIG_FILE_SOURCE_PATH = "src/templates/envoy.yaml.j2"
@@ -75,15 +82,14 @@ class EnvoyOperator(CharmBase):
             depends_on=[self.leadership_gate],
         )
 
-        self.ingress_relation_warn_if_missing = self.charm_reconciler.add(
-            component=IngressRelationWarnIfMissing(
-                charm=self,
-                name="ingress-relation-warn-if-missing",
-                inputs_getter=lambda: IngressRelationWarnIfMissingInputs(
-                    interface=self.ingress_relation.component.get_interface()
-                ),
-            ),
-            depends_on=[self.ingress_relation],
+        # Ensure that ambient and SDI Istio are not related at the same time
+        self.charm_reconciler.add(
+            IstioRelationsConflictDetector(charm=self, name="istio-relations-conflict-detector")
+        )
+
+        self.charm_reconciler.add(
+            AmbientMeshRequirerComponent(charm=self, name="ambient-ingress-requirer"),
+            depends_on=[self.leadership_gate],
         )
 
         self.envoy_pebble_container = self.charm_reconciler.add(

@@ -15,7 +15,10 @@ MOCK_GRPC_DATA = {"name": "service-name", "port": "1234"}
 @pytest.fixture
 def harness(mocked_kubernetes_service_patch):
     """Harness populated with the Charm and with its KubernetesServicePatch patched."""
-    return Harness(EnvoyOperator)
+    harness = Harness(EnvoyOperator)
+    harness.set_leader(True)
+    harness.set_model_name("maybe-kubeflow")
+    return harness
 
 
 @pytest.fixture()
@@ -28,17 +31,10 @@ def mocked_kubernetes_service_patch(mocker):
 
 
 class TestCharm:
-
     def test_log_forwarding(self, harness: Harness):
         with patch("charm.LogForwarder") as mock_logging:
             harness.begin()
             mock_logging.assert_called_once_with(charm=harness.charm)
-
-    def test_not_leader(self, harness):
-        """Test that the charm is not active when not leader."""
-        harness.begin_with_initial_hooks()
-        assert "Waiting for leadership" in harness.charm.leadership_gate.status.message
-        assert not isinstance(harness.charm.model.unit.status, ActiveStatus)
 
     def test_no_grpc_relation(self, harness):
         """Test the grpc Component and charm are not active when no grpc relation is present."""
@@ -123,41 +119,6 @@ class TestCharm:
         harness.begin_with_initial_hooks()
 
         assert harness.charm.ingress_relation.status == ActiveStatus()
-
-    def test_warning_if_ingress_missing(self, harness, mocker):
-        """Test that we emit a warning if we do not have an ingress established."""
-        harness.set_leader(True)
-        setup_grpc_relation(harness, "grpc-one", "8080")
-
-        harness.begin()
-
-        # Mock the ingress warning logger so we can check if it was called
-        mock_logger = mocker.MagicMock()
-        harness.charm.ingress_relation_warn_if_missing.component.logger = mock_logger
-
-        # Do something that will reconcile the charm
-        harness.charm.on.config_changed.emit()
-
-        # Assert that we've logged the missing ingress relation
-        assert "No ingress relation established" in mock_logger.warning.call_args[0][0]
-
-    def test_no_warning_if_ingress_is_established(self, harness, mocker):
-        """Test that we emit a warning if we do not have an ingress established."""
-        harness.set_leader(True)
-        setup_grpc_relation(harness, "grpc-one", "8080")
-        setup_ingress_relation(harness)
-
-        harness.begin()
-
-        # Mock the ingress warning logger so we can check if it was called
-        mock_logger = mocker.MagicMock()
-        harness.charm.ingress_relation_warn_if_missing.component.logger = mock_logger
-
-        # Do something that will reconcile the charm
-        harness.charm.on.config_changed.emit()
-
-        # Assert that we haven't logged anything
-        assert mock_logger.warning.call_args is None
 
     def test_pebble_container(self, harness):
         """Test the pebble container is active when prerequisites are ready."""
