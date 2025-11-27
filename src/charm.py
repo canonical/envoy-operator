@@ -7,8 +7,22 @@ from charmed_kubeflow_chisme.components import (
     LeadershipGateComponent,
     SdiRelationBroadcasterComponent,
 )
-from charmed_kubeflow_chisme.components.pebble_component import LazyContainerFileTemplate
+from charmed_kubeflow_chisme.components.pebble_component import (
+    LazyContainerFileTemplate,
+)
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
+from charms.istio_beacon_k8s.v0.service_mesh import ServiceMeshConsumer
+from charms.istio_ingress_k8s.v0.istio_ingress_route import (
+    BackendRef,
+    HTTPPathMatch,
+    HTTPPathMatchType,
+    HTTPRoute,
+    HTTPRouteMatch,
+    IstioIngressRouteConfig,
+    IstioIngressRouteRequirer,
+    Listener,
+    ProtocolType,
+)
 from charms.loki_k8s.v1.loki_push_api import LogForwarder
 from charms.observability_libs.v1.kubernetes_service_patch import KubernetesServicePatch
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
@@ -16,9 +30,11 @@ from lightkube.models.core_v1 import ServicePort
 from ops import main
 from ops.charm import CharmBase
 
-from components.ingress import IngressRelationWarnIfMissing, IngressRelationWarnIfMissingInputs
-from components.k8s_service_info_requirer_component import K8sServiceInfoRequirerComponent
+from components.k8s_service_info_requirer_component import (
+    K8sServiceInfoRequirerComponent,
+)
 from components.pebble import EnvoyPebbleService, EnvoyPebbleServiceInputs
+from src.components.mesh import IstioRelationsConflictDetector
 
 ENVOY_CONFIG_FILE_DESTINATION_PATH = "/envoy/envoy.yaml"
 ENVOY_CONFIG_FILE_SOURCE_PATH = "src/templates/envoy.yaml.j2"
@@ -68,15 +84,9 @@ class EnvoyOperator(CharmBase):
             depends_on=[self.leadership_gate],
         )
 
-        self.ingress_relation_warn_if_missing = self.charm_reconciler.add(
-            component=IngressRelationWarnIfMissing(
-                charm=self,
-                name="ingress-relation-warn-if-missing",
-                inputs_getter=lambda: IngressRelationWarnIfMissingInputs(
-                    interface=self.ingress_relation.component.get_interface()
-                ),
-            ),
-            depends_on=[self.ingress_relation],
+        # Ensure that ambient and SDI Istio are not related at the same time
+        self.charm_reconciler.add(
+            IstioRelationsConflictDetector(charm=self, name="istio-relations-conflict-detector")
         )
 
         self.envoy_pebble_container = self.charm_reconciler.add(
@@ -126,6 +136,39 @@ class EnvoyOperator(CharmBase):
             relation_name="grafana-dashboard",
         )
         self._logging = LogForwarder(charm=self)
+
+        # ambient mesh
+        self._mesh = ServiceMeshConsumer(self)
+        self.ingress = IstioIngressRouteRequirer(self, relation_name="istio-ingress-route")
+        self.ingress.submit_config(self._istio_ingress_route_config)
+
+    @property
+    def _istio_ingress_route_config(self) -> IstioIngressRouteConfig:
+        http_listener = Listener(port=80, protocol=ProtocolType.HTTP)
+
+        return IstioIngressRouteConfig(
+            model=self.model.name,
+            listeners=[http_listener],
+            http_routes=[
+                HTTPRoute(
+                    name="http-ingress",
+                    listener=http_listener,
+                    matches=[
+                        HTTPRouteMatch(
+                            path=HTTPPathMatch(
+                                type=HTTPPathMatchType.PathPrefix, value="/ml_metadata"
+                            )
+                        )
+                    ],
+                    backends=[
+                        BackendRef(
+                            service=self.model.app.name,
+                            port=int(self.model.config["http-port"]),
+                        )
+                    ],
+                )
+            ],
+        )
 
 
 if __name__ == "__main__":
