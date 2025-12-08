@@ -49,7 +49,7 @@ package-mode = false
 optional = true
 
 [tool.poetry.group.charm.dependencies]
-charmed-kubeflow-chisme = ">=0.4.15"
+charmed-kubeflow-chisme = ">=0.4.18"
 cosl = "^1.0.0"
 oci-image = "^1.0.0"
 ops = "^2.22.0"
