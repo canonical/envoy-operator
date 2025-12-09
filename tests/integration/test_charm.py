@@ -211,7 +211,6 @@ async def test_logging(ops_test: OpsTest):
 
 
 @pytest.mark.parametrize("container_name", list(CONTAINERS_SECURITY_CONTEXT_MAP.keys()))
-@pytest.mark.abort_on_fail
 async def test_container_security_context(
     ops_test: OpsTest,
     lightkube_client: lightkube.Client,
