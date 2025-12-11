@@ -2,7 +2,6 @@
 # See LICENSE file for licensing details.
 
 import logging
-import os
 from pathlib import Path
 
 import lightkube
@@ -22,7 +21,6 @@ from charmed_kubeflow_chisme.testing import (
 )
 from charms_dependencies import MLMD
 from lightkube import Client
-from lightkube.resources.core_v1 import Service
 from pyease_grpc import RpcSession, RpcUri
 from pytest_operator.plugin import OpsTest
 
