@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 
 import aiohttp
+import lightkube
 import pytest
 import tenacity
 import yaml
@@ -13,8 +14,11 @@ from charmed_kubeflow_chisme.testing import (
     assert_alert_rules,
     assert_logging,
     assert_metrics_endpoint,
+    assert_security_context,
     deploy_and_assert_grafana_agent,
+    generate_container_securitycontext_map,
     get_alert_rules,
+    get_pod_names,
 )
 from charms_dependencies import ISTIO_GATEWAY, ISTIO_PILOT, MLMD
 from lightkube import Client
@@ -23,6 +27,7 @@ from lightkube.resources.core_v1 import Service
 from pytest_operator.plugin import OpsTest
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
+CONTAINERS_SECURITY_CONTEXT_MAP = generate_container_securitycontext_map(METADATA)
 CHARM_ROOT = "."
 ENVOY_APP_NAME = METADATA["name"]
 ISTIO_GATEWAY_APP_NAME = "istio-ingressgateway"
@@ -189,7 +194,7 @@ async def test_alert_rules(ops_test: OpsTest):
     await assert_alert_rules(app, alert_rules)
 
 
-async def test_metrics_enpoint(ops_test: OpsTest):
+async def test_metrics_endpoint(ops_test: OpsTest):
     """Test metrics_endpoints are defined in relation data bag and their accessibility.
     This function gets all the metrics_endpoints from the relation data bag, checks if
     they are available from the grafana-agent-k8s charm and finally compares them with the
@@ -203,3 +208,24 @@ async def test_logging(ops_test: OpsTest):
     """Test logging is defined in relation data bag."""
     app = ops_test.model.applications[GRAFANA_AGENT_APP]
     await assert_logging(app)
+
+
+@pytest.mark.parametrize("container_name", list(CONTAINERS_SECURITY_CONTEXT_MAP.keys()))
+async def test_container_security_context(
+    ops_test: OpsTest,
+    lightkube_client: lightkube.Client,
+    container_name: str,
+):
+    """Test container security context is correctly set.
+
+    Verify that container spec defines the security context with correct
+    user ID and group ID.
+    """
+    pod_name = get_pod_names(ops_test.model.name, ENVOY_APP_NAME)[0]
+    assert_security_context(
+        lightkube_client,
+        pod_name,
+        container_name,
+        CONTAINERS_SECURITY_CONTEXT_MAP,
+        ops_test.model.name,
+    )
