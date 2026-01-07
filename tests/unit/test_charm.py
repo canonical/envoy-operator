@@ -36,9 +36,15 @@ class TestCharm:
             harness.begin()
             mock_logging.assert_called_once_with(charm=harness.charm)
 
+    def test_not_leader(self, harness):
+        """Test that the charm is not active when not leader."""
+        harness.set_leader(False)
+        harness.begin_with_initial_hooks()
+        assert "Waiting for leadership" in harness.charm.leadership_gate.status.message
+        assert not isinstance(harness.charm.model.unit.status, ActiveStatus)
+
     def test_no_grpc_relation(self, harness):
         """Test the grpc Component and charm are not active when no grpc relation is present."""
-        harness.set_leader(True)
         harness.begin_with_initial_hooks()
 
         assert (
@@ -50,7 +56,6 @@ class TestCharm:
 
     def test_many_relations(self, harness):
         """Test the grpc component and charm are not active when >1 grpc relation is present."""
-        harness.set_leader(True)
 
         setup_grpc_relation(harness, "grpc-one", "8080")
         setup_grpc_relation(harness, "grpc-two", "9090")
@@ -67,7 +72,6 @@ class TestCharm:
 
     def test_with_grpc_relation(self, harness):
         """Test that the grpc Component is active when one grpc relation is present."""
-        harness.set_leader(True)
         setup_grpc_relation(harness, "grpc-one", "8080")
         harness.begin_with_initial_hooks()
 
@@ -111,7 +115,6 @@ class TestCharm:
 
     def test_with_ingress_relation(self, harness):
         """Test that the ingress_relation Component is active when an ingress is present."""
-        harness.set_leader(True)
         # Set required grpc relation
         setup_grpc_relation(harness, "grpc-one", "8080")
         setup_ingress_relation(harness)
@@ -122,7 +125,6 @@ class TestCharm:
 
     def test_pebble_container(self, harness):
         """Test the pebble container is active when prerequisites are ready."""
-        harness.set_leader(True)
         setup_grpc_relation(harness, "grpc-one", "8080")
         setup_ingress_relation(harness)
 
