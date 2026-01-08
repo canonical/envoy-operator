@@ -13,7 +13,7 @@ MOCK_GRPC_DATA = {"name": "service-name", "port": "1234"}
 
 
 @pytest.fixture
-def harness(mocked_kubernetes_service_patch):
+def harness(mocked_kubernetes_service_patch) -> Harness:
     """Harness populated with the Charm and with its KubernetesServicePatch patched."""
     harness = Harness(EnvoyOperator)
     harness.set_leader(True)
@@ -43,7 +43,7 @@ class TestCharm:
         assert "Waiting for leadership" in harness.charm.leadership_gate.status.message
         assert not isinstance(harness.charm.model.unit.status, ActiveStatus)
 
-    def test_no_grpc_relation(self, harness):
+    def test_no_grpc_relation(self, harness: Harness):
         """Test the grpc Component and charm are not active when no grpc relation is present."""
         harness.begin_with_initial_hooks()
 
@@ -54,7 +54,20 @@ class TestCharm:
         assert isinstance(harness.charm.grpc.status, BlockedStatus)
         assert not isinstance(harness.charm.model.unit.status, ActiveStatus)
 
-    def test_many_relations(self, harness):
+    def test_multiple_ingress_relations(self, harness: Harness):
+        """Test that the charm becomes blocked if both ingress relations exist."""
+        setup_grpc_relation(harness, "grpc-one", "8080")
+        harness.add_relation("ingress", "istio-pilot")
+        harness.add_relation("istio-ingress-route", "istio-ingress-k8s")
+        harness.begin_with_initial_hooks()
+
+        assert (
+            "Both 'ingress' and 'istio-ingress-route' relations found. Please choose one."
+            in harness.charm.model.unit.status.message
+        )
+        assert isinstance(harness.charm.model.unit.status, BlockedStatus)
+
+    def test_many_relations(self, harness: Harness):
         """Test the grpc component and charm are not active when >1 grpc relation is present."""
 
         setup_grpc_relation(harness, "grpc-one", "8080")
@@ -70,14 +83,14 @@ class TestCharm:
         assert "Too many remote applications on grpc (2 > 1)" in error.value.args
         assert not isinstance(harness.charm.model.unit.status, ActiveStatus)
 
-    def test_with_grpc_relation(self, harness):
+    def test_with_grpc_relation(self, harness: Harness):
         """Test that the grpc Component is active when one grpc relation is present."""
         setup_grpc_relation(harness, "grpc-one", "8080")
         harness.begin_with_initial_hooks()
 
         assert isinstance(harness.charm.grpc.status, ActiveStatus)
 
-    def test_grpc_with_empty_data(self, harness):
+    def test_grpc_with_empty_data(self, harness: Harness):
         """Test the grpc relation component returns WaitingStatus when data is missing."""
         # Arrange
         harness.begin()
@@ -93,7 +106,7 @@ class TestCharm:
 
         assert isinstance(harness.charm.grpc.get_status(), WaitingStatus)
 
-    def test_grpc_relation_with_missing_data(self, harness):
+    def test_grpc_relation_with_missing_data(self, harness: Harness):
         """Test the grpc relation component returns WaitingStatus when data is incomplete."""
         # Arrange
         harness.begin()
@@ -113,7 +126,7 @@ class TestCharm:
 
         assert isinstance(harness.charm.grpc.component.get_status(), WaitingStatus)
 
-    def test_with_ingress_relation(self, harness):
+    def test_with_ingress_relation(self, harness: Harness):
         """Test that the ingress_relation Component is active when an ingress is present."""
         # Set required grpc relation
         setup_grpc_relation(harness, "grpc-one", "8080")
@@ -123,7 +136,7 @@ class TestCharm:
 
         assert harness.charm.ingress_relation.status == ActiveStatus()
 
-    def test_pebble_container(self, harness):
+    def test_pebble_container(self, harness: Harness):
         """Test the pebble container is active when prerequisites are ready."""
         setup_grpc_relation(harness, "grpc-one", "8080")
         setup_ingress_relation(harness)
