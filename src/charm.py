@@ -23,11 +23,11 @@ from ops.charm import CharmBase
 from components.k8s_service_info_requirer_component import (
     K8sServiceInfoRequirerComponent,
 )
-from components.mesh import (
-    AmbientMeshRequirerComponent,
+from components.pebble import EnvoyPebbleService, EnvoyPebbleServiceInputs
+from src.components.istio_ambient_requirer_component import AmbientMeshRequirerComponent
+from src.components.istio_relations_conflict_detector import (
     IstioRelationsConflictDetector,
 )
-from components.pebble import EnvoyPebbleService, EnvoyPebbleServiceInputs
 
 ENVOY_CONFIG_FILE_SOURCE_PATH = "src/templates/envoy.yaml.j2"
 GRPC_RELATION_NAME = "grpc"
