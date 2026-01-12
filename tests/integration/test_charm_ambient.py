@@ -95,6 +95,7 @@ async def test_logging(ops_test: OpsTest):
 
 
 async def test_web_grpc_mlmd():
+    """Test the web-grpc envoy connection to mlmd."""
     uri = RpcUri(
         base_url=f"{INGRESS_IP}:80",
         package="ml_metadata",
