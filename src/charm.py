@@ -61,6 +61,11 @@ class EnvoyOperator(CharmBase):
             depends_on=[self.leadership_gate],
         )
 
+        # Ensure that ambient and SDI Istio are not related at the same time
+        self.istio_relations_conflict_detector = self.charm_reconciler.add(
+            IstioRelationsConflictDetector(charm=self, name="istio-relations-conflict-detector")
+        )
+
         # Should this Component block the charm if it is not available?  Ingress is a requirement
         # of this charm deployed in the Kubeflow bundle not of Envoy itself (see
         # https://github.com/canonical/envoy-operator/issues/61 for more details).
@@ -79,17 +84,12 @@ class EnvoyOperator(CharmBase):
                     "port": int(self.model.config["http-port"]),
                 },
             ),
-            depends_on=[self.leadership_gate],
-        )
-
-        # Ensure that ambient and SDI Istio are not related at the same time
-        self.charm_reconciler.add(
-            IstioRelationsConflictDetector(charm=self, name="istio-relations-conflict-detector")
+            depends_on=[self.leadership_gate, self.istio_relations_conflict_detector],
         )
 
         self.charm_reconciler.add(
             AmbientMeshRequirerComponent(charm=self, name="ambient-ingress-requirer"),
-            depends_on=[self.leadership_gate],
+            depends_on=[self.leadership_gate, self.istio_relations_conflict_detector],
         )
 
         self.envoy_pebble_container = self.charm_reconciler.add(
