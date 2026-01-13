@@ -21,6 +21,7 @@ from charmed_kubeflow_chisme.testing import (
 )
 from charms_dependencies import MLMD
 from lightkube import Client
+from lightkube.resources.core_v1 import Service
 from pyease_grpc import RpcSession, RpcUri
 from pytest_operator.plugin import OpsTest
 
@@ -28,10 +29,9 @@ METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 CONTAINERS_SECURITY_CONTEXT_MAP = generate_container_securitycontext_map(METADATA)
 CHARM_ROOT = "."
 ENVOY_APP_NAME = METADATA["name"]
-ISTIO_GATEWAY_APP_NAME = "istio-ingressgateway"
 HTTP_PATH = "/ml_metadata.MetadataStoreService/GetExecutionTypes"
 HEADERS = {"Content-Type": "application/grpc-web+proto"}
-INGRESS_IP = "10.64.140.43"
+INGRESS_K8S_SERVICE = "istio-ingress-k8s-istio"
 MLMD_PROTO_PATH = Path("tests/integration/data/metadata_store_service.proto")
 
 
@@ -94,10 +94,14 @@ async def test_logging(ops_test: OpsTest):
     await assert_logging(app)
 
 
-async def test_web_grpc_mlmd():
+async def test_web_grpc_mlmd(ops_test: OpsTest, lightkube_client: lightkube.Client):
     """Test the web-grpc envoy connection to mlmd."""
+    # Get the gateway IP
+    service = lightkube_client.get(Service, INGRESS_K8S_SERVICE, namespace=ops_test.model.name)
+    gateway_ip = service.status.loadBalancer.ingress[0].ip
+
     uri = RpcUri(
-        base_url=f"{INGRESS_IP}:80",
+        base_url=f"{gateway_ip}:80",
         package="ml_metadata",
         service="MetadataStoreService",
         method="GetExecutionTypes",
