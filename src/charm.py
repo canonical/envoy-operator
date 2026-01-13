@@ -20,14 +20,14 @@ from lightkube.models.core_v1 import ServicePort
 from ops import main
 from ops.charm import CharmBase
 
+from components.istio_ambient_requirer_component import AmbientMeshRequirerComponent
+from components.istio_relations_conflict_detector import (
+    IstioRelationsConflictDetector,
+)
 from components.k8s_service_info_requirer_component import (
     K8sServiceInfoRequirerComponent,
 )
 from components.pebble import EnvoyPebbleService, EnvoyPebbleServiceInputs
-from src.components.istio_ambient_requirer_component import AmbientMeshRequirerComponent
-from src.components.istio_relations_conflict_detector import (
-    IstioRelationsConflictDetector,
-)
 
 ENVOY_CONFIG_FILE_SOURCE_PATH = "src/templates/envoy.yaml.j2"
 GRPC_RELATION_NAME = "grpc"
