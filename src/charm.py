@@ -29,7 +29,7 @@ from components.k8s_service_info_requirer_component import (
 )
 from components.pebble import EnvoyPebbleService, EnvoyPebbleServiceInputs
 
-ENVOY_CONFIG_FILE_SOURCE_PATH = "src/templates/envoy.yaml.j2"
+ENVOY_CONFIG_FILE_SOURCE_PATH = "src/templates/envoy-config.yaml.j2"
 GRPC_RELATION_NAME = "grpc"
 METRICS_PATH = "/stats/prometheus"
 
@@ -100,7 +100,7 @@ class EnvoyOperator(CharmBase):
                 container_name=self._container_name,
                 files_to_push=[
                     LazyContainerFileTemplate(
-                        destination_path=self._storage_path / "envoy.yaml",
+                        destination_path=self._storage_path / "envoy-config.yaml",
                         source_template_path=ENVOY_CONFIG_FILE_SOURCE_PATH,
                         context=lambda: {
                             "admin_port": self.config["admin-port"],
@@ -111,7 +111,7 @@ class EnvoyOperator(CharmBase):
                     )
                 ],
                 inputs_getter=lambda: EnvoyPebbleServiceInputs(
-                    config_path=self._storage_path / "envoy.yaml"
+                    config_path=self._storage_path / "envoy-config.yaml"
                 ),
             ),
             depends_on=[self.grpc],
