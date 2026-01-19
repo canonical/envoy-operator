@@ -6,18 +6,17 @@ description: https://www.envoyproxy.io/
 containers:
   envoy:
     resource: oci-image
-    # Uncomment when we want to use the rock
-    # uid: 584792
-    # gid: 584792
+    uid: 584792
+    gid: 584792
     mounts:
       - storage: config
-        location: /etc/envoy
+        location: /envoy
 resources:
   oci-image:
     type: oci-image
     description: Backing OCI image
     auto-fetch: true
-    upstream-source: ghcr.io/kubeflow/kfp-metadata-envoy:2.15.0
+    upstream-source: ghcr.io/canonical/envoy:1.28.2
 provides:
   metrics-endpoint:
     interface: prometheus_scrape
