@@ -6,8 +6,9 @@ description: https://www.envoyproxy.io/
 containers:
   envoy:
     resource: oci-image
-    uid: 584792
-    gid: 584792
+    # Uncomment when we want to use the rock
+    # uid: 584792
+    # gid: 584792
     mounts:
       - storage: config
         location: /etc/envoy
