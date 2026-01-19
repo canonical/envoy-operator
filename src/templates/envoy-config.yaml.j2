@@ -70,3 +70,6 @@ static_resources:
                     socket_address:
                       address: {{ upstream_service }}
                       port_value: {{ upstream_port }}
+kind: ConfigMap
+metadata:
+  name: {{ app_name }}-config

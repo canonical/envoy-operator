@@ -10,13 +10,13 @@ containers:
     gid: 584792
     mounts:
       - storage: config
-        location: /envoy
+        location: /etc/envoy
 resources:
   oci-image:
     type: oci-image
     description: Backing OCI image
     auto-fetch: true
-    upstream-source: ghcr.io/canonical/envoy:1.28.2
+    upstream-source: ghcr.io/kubeflow/kfp-metadata-envoy:2.15.0
 provides:
   metrics-endpoint:
     interface: prometheus_scrape
