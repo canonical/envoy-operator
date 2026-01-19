@@ -39,7 +39,6 @@ class EnvoyOperator(CharmBase):
         super().__init__(*args)
 
         # Storage
-        self._name = self.model.app.name
         self._container_name = next(iter(self.meta.containers))
         _container_meta = self.meta.containers[self._container_name]
         _storage_name = next(iter(_container_meta.mounts))
@@ -108,7 +107,6 @@ class EnvoyOperator(CharmBase):
                             "http_port": self.config["http-port"],
                             "upstream_service": self.grpc.component.get_service_info().name,
                             "upstream_port": self.grpc.component.get_service_info().port,
-                            "app_name": self._name,
                         },
                     )
                 ],
