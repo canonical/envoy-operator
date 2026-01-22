@@ -20,8 +20,8 @@ from components.ingress import IngressRelationWarnIfMissing, IngressRelationWarn
 from components.k8s_service_info_requirer_component import K8sServiceInfoRequirerComponent
 from components.pebble import EnvoyPebbleService, EnvoyPebbleServiceInputs
 
-ENVOY_CONFIG_FILE_DESTINATION_PATH = "/envoy/envoy.yaml"
-ENVOY_CONFIG_FILE_SOURCE_PATH = "src/templates/envoy.yaml.j2"
+ENVOY_CONFIG_FILE_DESTINATION_PATH = "/envoy/envoy-config.yaml"
+ENVOY_CONFIG_FILE_SOURCE_PATH = "src/templates/envoy-config.yaml.j2"
 GRPC_RELATION_NAME = "grpc"
 METRICS_PATH = "/stats/prometheus"
 
