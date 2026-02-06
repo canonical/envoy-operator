@@ -4,15 +4,19 @@ output "app_name" {
 
 output "provides" {
   value = {
+    grafana_dashboard = "grafana-dashboard",
     metrics_endpoint  = "metrics-endpoint",
-    grafana_dashboard = "grafana-dashboard"
+    provide_cmr_mesh  = "provide-cmr-mesh"
   }
 }
 
 output "requires" {
   value = {
-    grpc    = "grpc",
-    ingress = "ingress",
-    logging = "logging"
+    grpc                = "grpc",
+    ingress             = "ingress",
+    istio_ingress_route = "istio-ingress-route",
+    logging             = "logging",
+    require_cmr_mesh    = "require-cmr-mesh",
+    service_mesh        = "service-mesh"
   }
 }
