@@ -29,7 +29,7 @@ from components.k8s_service_info_requirer_component import (
 )
 from components.pebble import EnvoyPebbleService, EnvoyPebbleServiceInputs
 
-ENVOY_CONFIG_FILE_DESTINATION_PATH = Path("/run/envoy-config.yaml")
+ENVOY_CONFIG_FILE_DESTINATION_PATH = Path("/var/lib/pebble/default/envoy-config.yaml")
 ENVOY_CONFIG_FILE_SOURCE_PATH = Path("src/templates/envoy-config.yaml.j2")
 GRPC_RELATION_NAME = "grpc"
 METRICS_PATH = "/stats/prometheus"

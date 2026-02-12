@@ -13,7 +13,7 @@ resources:
     type: oci-image
     description: Backing OCI image
     auto-fetch: true
-    upstream-source: ghcr.io/canonical/envoy:1.28.2-ck7
+    upstream-source: dariofaccin/envoy:1.28.2-94377c9
 provides:
   metrics-endpoint:
     interface: prometheus_scrape
