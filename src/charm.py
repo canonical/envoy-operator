@@ -29,7 +29,8 @@ from components.k8s_service_info_requirer_component import (
 )
 from components.pebble import EnvoyPebbleService, EnvoyPebbleServiceInputs
 
-ENVOY_CONFIG_FILE_SOURCE_PATH = "src/templates/envoy-config.yaml.j2"
+ENVOY_CONFIG_FILE_DESTINATION_PATH = Path("/var/lib/pebble/default/envoy-config.yaml")
+ENVOY_CONFIG_FILE_SOURCE_PATH = Path("src/templates/envoy-config.yaml.j2")
 GRPC_RELATION_NAME = "grpc"
 METRICS_PATH = "/stats/prometheus"
 
@@ -38,11 +39,7 @@ class EnvoyOperator(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
 
-        # Storage
         self._container_name = next(iter(self.meta.containers))
-        _container_meta = self.meta.containers[self._container_name]
-        _storage_name = next(iter(_container_meta.mounts))
-        self._storage_path = Path(_container_meta.mounts[_storage_name].location)
 
         self.charm_reconciler = CharmReconciler(self)
 
@@ -100,7 +97,7 @@ class EnvoyOperator(CharmBase):
                 container_name=self._container_name,
                 files_to_push=[
                     LazyContainerFileTemplate(
-                        destination_path=self._storage_path / "envoy-config.yaml",
+                        destination_path=ENVOY_CONFIG_FILE_DESTINATION_PATH,
                         source_template_path=ENVOY_CONFIG_FILE_SOURCE_PATH,
                         context=lambda: {
                             "admin_port": self.config["admin-port"],
@@ -111,7 +108,7 @@ class EnvoyOperator(CharmBase):
                     )
                 ],
                 inputs_getter=lambda: EnvoyPebbleServiceInputs(
-                    config_path=self._storage_path / "envoy-config.yaml"
+                    config_path=ENVOY_CONFIG_FILE_DESTINATION_PATH
                 ),
             ),
             depends_on=[self.grpc],
