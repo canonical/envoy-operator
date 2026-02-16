@@ -1,4 +1,5 @@
 .coverage
+coverage.xml
 *.charm
 build/
 __pycache__/

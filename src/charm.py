@@ -2,6 +2,8 @@
 # Copyright 2021 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+from pathlib import Path
+
 from charmed_kubeflow_chisme.components import (
     CharmReconciler,
     LeadershipGateComponent,
@@ -20,8 +22,8 @@ from components.ingress import IngressRelationWarnIfMissing, IngressRelationWarn
 from components.k8s_service_info_requirer_component import K8sServiceInfoRequirerComponent
 from components.pebble import EnvoyPebbleService, EnvoyPebbleServiceInputs
 
-ENVOY_CONFIG_FILE_DESTINATION_PATH = "/envoy/envoy-config.yaml"
-ENVOY_CONFIG_FILE_SOURCE_PATH = "src/templates/envoy-config.yaml.j2"
+ENVOY_CONFIG_FILE_DESTINATION_PATH = Path("/var/lib/pebble/default/envoy-config.yaml")
+ENVOY_CONFIG_FILE_SOURCE_PATH = Path("src/templates/envoy-config.yaml.j2")
 GRPC_RELATION_NAME = "grpc"
 METRICS_PATH = "/stats/prometheus"
 
@@ -29,6 +31,8 @@ METRICS_PATH = "/stats/prometheus"
 class EnvoyOperator(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
+
+        self._container_name = next(iter(self.meta.containers))
 
         self.charm_reconciler = CharmReconciler(self)
 
@@ -84,7 +88,7 @@ class EnvoyOperator(CharmBase):
                 charm=self,
                 name="envoy-component",
                 service_name="envoy",
-                container_name="envoy",
+                container_name=self._container_name,
                 files_to_push=[
                     LazyContainerFileTemplate(
                         destination_path=ENVOY_CONFIG_FILE_DESTINATION_PATH,
