@@ -6,8 +6,9 @@ description: https://www.envoyproxy.io/
 containers:
   envoy:
     resource: oci-image
-    uid: 584792
-    gid: 584792
+    # Set these when using the rock
+    # uid: 584792
+    # gid: 584792
 resources:
   oci-image:
     type: oci-image
