@@ -7,8 +7,8 @@ containers:
   envoy:
     resource: oci-image
     # Set these to 584792 when using the rock
-    uid: 1000
-    gid: 1000
+    uid: 0
+    gid: 0
 resources:
   oci-image:
     type: oci-image
