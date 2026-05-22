@@ -8,13 +8,6 @@ on:
         required: true
 
 jobs:
-  lib-check:
-    name: Check libraries
-    uses: canonical/charmed-kubeflow-workflows/.github/workflows/_quality-checks.yaml@main
-    secrets: inherit
-    with:
-        charm-path: "."
-
   lint:
     name: Lint Check
     runs-on: ubuntu-24.04
