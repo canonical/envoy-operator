@@ -169,7 +169,7 @@ jobs:
 
       - name: Get juju status
         run: juju status
-        if: failure()
+        if: always()
 
       - name: Get envoy workload logs
         run: kubectl logs --tail 100 -ntesting -ljuju-app=envoy
