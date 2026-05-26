@@ -146,9 +146,9 @@ jobs:
       - name: Configure Cilium for Canonical K8s
         if: matrix.test-type == 'integration-ambient'
         run: |
-          # Configure Cilium for Canonical K8s to work with Charmed Istio (Ambient mode)
-          # See https://canonical-service-mesh-documentation.readthedocs-hosted.com/en/latest/how-to/use-charmed-istio-with-canonical-kubernetes/
+          # for context, see https://docs.cilium.io/en/stable/network/servicemesh/istio/
           kubectl -n kube-system patch configmap cilium-config --type merge --patch '{"data":{"bpf-lb-sock-hostns-only":"true"}}'
+          kubectl -n kube-system patch configmap cilium-config --type merge --patch '{"data":{"cni-exclusive":"false"}}'
           kubectl -n kube-system rollout restart daemonset cilium
 
       - name: Download packed charm(s)
@@ -172,19 +172,19 @@ jobs:
         if: always()
 
       - name: Get envoy workload logs
-        run: kubectl logs --tail 100 -ntesting -ljuju-app=envoy
+        run: kubectl logs --tail 100 -n testing -l app.kubernetes.io/name=envoy -c envoy
         if: failure()
 
       - name: Get envoy operator logs
-        run: kubectl logs --tail 100 -ntesting -ljuju-operator=envoy
+        run: kubectl logs --tail 100 -n testing -l app.kubernetes.io/name=envoy -c charm
         if: failure()
 
       - name: Get mlmd workload logs
-        run: kubectl logs --tail 100 -ntesting -ljuju-app=mlmd
+        run: kubectl logs --tail 100 -n testing -l app.kubernetes.io/name=mlmd -c mlmd-grpc-server
         if: failure()
 
       - name: Get mlmd operator logs
-        run: kubectl logs --tail 100 -ntesting -ljuju-operator=mlmd
+        run: kubectl logs --tail 100 -n testing -l app.kubernetes.io/name=mlmd -c charm
         if: failure()
 
       - name: Get istio-pilot workload logs
@@ -192,7 +192,7 @@ jobs:
         if: failure()
 
       - name: Get istio-pilot operator logs
-        run: kubectl logs --tail 100 -ntesting -ljuju-operator=istio-pilot
+        run: kubectl logs --tail 100 -n testing -l app.kubernetes.io/name=istio-pilot -c charm
         if: failure()
 
       - name: Collect charm debug artifacts
