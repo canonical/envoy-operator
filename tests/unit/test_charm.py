@@ -3,11 +3,11 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from charms.istio_ingress_k8s.v0.istio_ingress_route import ProtocolType
 from ops import BlockedStatus
 from ops.model import ActiveStatus, TooManyRelatedAppsError, WaitingStatus
 from ops.testing import Harness
 
-from charms.istio_ingress_k8s.v0.istio_ingress_route import ProtocolType
 from charm import GRPC_RELATION_NAME, EnvoyOperator
 
 MOCK_GRPC_DATA = {"name": "service-name", "port": "1234"}
