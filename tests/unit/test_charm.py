@@ -7,6 +7,7 @@ from ops import BlockedStatus
 from ops.model import ActiveStatus, TooManyRelatedAppsError, WaitingStatus
 from ops.testing import Harness
 
+from charms.istio_ingress_k8s.v0.istio_ingress_route import ProtocolType
 from charm import GRPC_RELATION_NAME, EnvoyOperator
 
 MOCK_GRPC_DATA = {"name": "service-name", "port": "1234"}
@@ -31,6 +32,19 @@ def mocked_kubernetes_service_patch(mocker):
 
 
 class TestCharm:
+    @pytest.mark.parametrize("tls_enabled, expected_port", [(False, 80), (True, 443)])
+    def test_ambient_ingress_listener_port(self, harness: Harness, tls_enabled, expected_port):
+        """Test that the ambient ingress listener uses the correct port based on TLS setting."""
+        harness.begin()
+        component = harness.charm.ambient_ingress.component
+        component.ingress = MagicMock()
+        component.ingress.tls_enabled = tls_enabled
+
+        config = component._istio_ingress_route_config
+        assert len(config.listeners) == 1
+        assert config.listeners[0].port == expected_port
+        assert config.listeners[0].protocol == ProtocolType.HTTP
+
     def test_log_forwarding(self, harness: Harness):
         with patch("charm.LogForwarder") as mock_logging:
             harness.begin()
