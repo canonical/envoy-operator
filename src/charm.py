@@ -84,7 +84,7 @@ class EnvoyOperator(CharmBase):
             depends_on=[self.leadership_gate, self.istio_relations_conflict_detector],
         )
 
-        self.charm_reconciler.add(
+        self.ambient_ingress = self.charm_reconciler.add(
             AmbientMeshRequirerComponent(charm=self, name="ambient-ingress-requirer"),
             depends_on=[self.leadership_gate, self.istio_relations_conflict_detector],
         )
