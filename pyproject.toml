@@ -81,7 +81,6 @@ optional = true
 [tool.poetry.group.unit.dependencies]
 coverage = "^7.6.1"
 pytest = "^8.3.4"
-pytest-lazy-fixture = "^0.6.3"
 pytest-mock = "^3.14.0"
 
 [tool.poetry.group.integration]

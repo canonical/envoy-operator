@@ -60,7 +60,10 @@ class AmbientMeshRequirerComponent(Component):
 
     @property
     def _istio_ingress_route_config(self) -> IstioIngressRouteConfig:
-        http_listener = Listener(port=80, protocol=ProtocolType.HTTP)
+        if self.ingress.tls_enabled:
+            http_listener = Listener(port=443, protocol=ProtocolType.HTTP)
+        else:
+            http_listener = Listener(port=80, protocol=ProtocolType.HTTP)
 
         return IstioIngressRouteConfig(
             model=self.model.name,
