@@ -3,7 +3,11 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from charms.istio_ingress_k8s.v0.istio_ingress_route import ProtocolType
+from charms.istio_ingress_k8s.v0.istio_ingress_route import (
+    HTTPPathMatchType,
+    IstioIngressRouteConfig,
+    ProtocolType,
+)
 from ops import BlockedStatus
 from ops.model import ActiveStatus, TooManyRelatedAppsError, WaitingStatus
 from ops.testing import Harness
@@ -91,6 +95,35 @@ class TestCharm:
         # though there is more than one relation on the istio-ingress-route endpoint.
         status = harness.charm.istio_relations_conflict_detector.component.get_status()
         assert isinstance(status, ActiveStatus)
+
+    def test_each_istio_ingress_route_relation_receives_config(self, harness: Harness):
+        """Test that an HTTPRoute config is submitted to every istio-ingress-route relation."""
+        harness.begin()
+
+        rel_id_1 = harness.add_relation("istio-ingress-route", "istio-ingress-k8s")
+        rel_id_2 = harness.add_relation("istio-ingress-route", "istio-ingress-k8s-2")
+
+        # Use the real submit_config so we can inspect the databags; only force readiness.
+        ingress = harness.charm.ambient_ingress.component.ingress
+        ingress.is_ready = MagicMock(return_value=True)
+
+        # Reconcile the charm so the component submits its config.
+        harness.charm.on.install.emit()
+
+        # Each relation's application databag should contain a valid config that
+        # defines the envoy HTTPRoute, proving the lib handles every ingress.
+        for rel_id in (rel_id_1, rel_id_2):
+            app_data = harness.get_relation_data(rel_id, harness.charm.app.name)
+            assert "config" in app_data
+
+            config = IstioIngressRouteConfig.model_validate_json(app_data["config"])
+            assert len(config.http_routes) == 1
+            http_route = config.http_routes[0]
+            assert http_route.matches[0].path.type == HTTPPathMatchType.PathPrefix
+            assert http_route.matches[0].path.value == "/ml_metadata.MetadataStoreService/"
+            assert http_route.backends[0].service == harness.charm.app.name
+            assert http_route.backends[0].port == int(harness.charm.model.config["http-port"])
+            assert http_route.listener.name == "http-80"
 
     def test_many_relations(self, harness: Harness):
         """Test the grpc component and charm are not active when >1 grpc relation is present."""
