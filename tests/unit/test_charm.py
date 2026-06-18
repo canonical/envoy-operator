@@ -81,6 +81,17 @@ class TestCharm:
         )
         assert isinstance(harness.charm.model.unit.status, BlockedStatus)
 
+    def test_multiple_istio_ingress_route_relations(self, harness: Harness):
+        """Test that multiple istio-ingress-route relations do not block the charm."""
+        harness.add_relation("istio-ingress-route", "istio-ingress-k8s")
+        harness.add_relation("istio-ingress-route", "istio-ingress-k8s-2")
+        harness.begin()
+
+        # Inspecting the full list of relations per endpoint must not raise even
+        # though there is more than one relation on the istio-ingress-route endpoint.
+        status = harness.charm.istio_relations_conflict_detector.component.get_status()
+        assert isinstance(status, ActiveStatus)
+
     def test_many_relations(self, harness: Harness):
         """Test the grpc component and charm are not active when >1 grpc relation is present."""
 

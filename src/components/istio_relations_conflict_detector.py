@@ -16,10 +16,10 @@ class IstioRelationsConflictDetector(Component):
         super().__init__(*args, **kwargs)
 
     def get_status(self) -> StatusBase:
-        sdi_relation = self._charm.model.get_relation(SDI_RELATION)
-        istio_relation = self._charm.model.get_relation(ISTIO_RELATION)
+        sdi_relations = self._charm.model.relations[SDI_RELATION]
+        istio_relations = self._charm.model.relations[ISTIO_RELATION]
 
-        if sdi_relation and istio_relation:
+        if sdi_relations and istio_relations:
             logger.warn(
                 f"Both SDI relation '{SDI_RELATION}` and Istio relation '{ISTIO_RELATION}' found."
                 f"Please only relate to one of the relations, and not both at the same time"
