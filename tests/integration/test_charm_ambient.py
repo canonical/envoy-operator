@@ -124,8 +124,8 @@ async def test_logging(ops_test: OpsTest):
     await assert_logging(app)
 
 
-async def test_web_grpc_mlmd(ops_test: OpsTest, lightkube_client: lightkube.Client):
-    """Test the web-grpc envoy connection to mlmd."""
+async def assert_web_grpc_mlmd(ops_test: OpsTest, lightkube_client: lightkube.Client):
+    """Verify the web-grpc envoy connection to mlmd through the ingress gateway."""
     # Get the gateway IP
     service = lightkube_client.get(Service, INGRESS_K8S_SERVICE, namespace=ops_test.model.name)
     gateway_ip = service.status.loadBalancer.ingress[0].ip
@@ -139,6 +139,12 @@ async def test_web_grpc_mlmd(ops_test: OpsTest, lightkube_client: lightkube.Clie
 
     response = web_grpc_session.request(uri, {})
     assert response.response.status_code == 200
+
+
+@pytest.mark.abort_on_fail
+async def test_web_grpc_mlmd(ops_test: OpsTest, lightkube_client: lightkube.Client):
+    """Test the web-grpc envoy connection to mlmd before the second ingress."""
+    await assert_web_grpc_mlmd(ops_test, lightkube_client)
 
 
 @pytest.mark.parametrize("container_name", list(CONTAINERS_SECURITY_CONTEXT_MAP.keys()))
@@ -235,3 +241,11 @@ async def test_httproute_attached_to_second_gateway(ops_test: OpsTest, lightkube
     rule = httproute.spec["rules"][0]
     assert rule["matches"][0]["path"]["value"] == INGRESS_ROUTE_PATH
     assert rule["backendRefs"][0]["name"] == ENVOY_APP_NAME
+
+
+@pytest.mark.abort_on_fail
+async def test_web_grpc_mlmd_after_second_ingress(
+    ops_test: OpsTest, lightkube_client: lightkube.Client
+):
+    """Test the web-grpc envoy connection to mlmd after the second ingress."""
+    await assert_web_grpc_mlmd(ops_test, lightkube_client)
