@@ -52,6 +52,8 @@ class AmbientMeshRequirerComponent(Component):
     def _configure_app_leader(self, event):
         if self.ingress.is_ready():
             try:
+                # submit_config publishes this same config to every istio-ingress-route
+                # relation, so all related ingress providers are (re)configured at once.
                 self.ingress.submit_config(self._istio_ingress_route_config)
             except Exception as e:
                 raise GenericCharmRuntimeError(f"Failed to submit ingress config: {e}")
